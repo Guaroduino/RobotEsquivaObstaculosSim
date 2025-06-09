@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación Matter.js Cenital</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #222;
+    }
+    #sim {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="sim"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+  <script>
+    // Configuración inicial
+    const { Engine, World, Bodies, Body, Runner, Events } = Matter;
+    const SCALE = 1; // 1px = 1mm
+    const canvas = document.getElementById('sim');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Crear motor y mundo sin gravedad
+    const engine = Engine.create();
+    engine.gravity.y = 0;
+    engine.gravity.x = 0;
+    const world = engine.world;
+
+    // Cargar imagen del chasis
+    const chassisImg = new Image();
+    chassisImg.src = 'Chassis3.png';
+
+    // Dimensiones del chasis (en px = mm)
+    const chassisWidth = 220; // px
+    const chassisHeight = 151; // px
+
+    // Dimensiones de la rueda
+    const wheelWidth = 65; // px
+    const wheelHeight = 27; // px
+
+    // Cargar imagen de la rueda
+    const wheelImg = new Image();
+    wheelImg.src = 'robot_wheel.png';
+
+    // Posiciones relativas de las ruedas respecto al centro del chasis
+    const wheelOffsetX = chassisWidth * 0.18; // adelante (frente del robot)
+    const wheelOffsetY = chassisHeight * 0.40; // separación lateral aumentada
+
+    // Crear cuerpos de las ruedas
+    const leftWheel = Bodies.rectangle(
+      canvas.width / 2 + wheelOffsetX,
+      canvas.height / 2 + wheelOffsetY,
+      wheelWidth,
+      wheelHeight,
+      {
+        label: 'leftWheel',
+        render: { visible: false },
+        collisionFilter: { group: -1 },
+      }
+    );
+    const rightWheel = Bodies.rectangle(
+      canvas.width / 2 + wheelOffsetX,
+      canvas.height / 2 - wheelOffsetY,
+      wheelWidth,
+      wheelHeight,
+      {
+        label: 'rightWheel',
+        render: { visible: false },
+        collisionFilter: { group: -1 },
+      }
+    );
+
+    // Crear cuerpo del chasis
+    const chassis = Bodies.rectangle(
+      canvas.width / 2,
+      canvas.height / 2,
+      chassisWidth,
+      chassisHeight,
+      {
+        label: 'chassis',
+        render: { visible: false },
+        collisionFilter: { group: -1 },
+      }
+    );
+
+    // Crear cuerpo compuesto del robot
+    const robot = Body.create({
+      parts: [chassis, leftWheel, rightWheel]
+    });
+    World.add(world, robot);
+
+    // Variables globales para debug de fuerzas
+    let lastLeftForce = {pos: {x:0, y:0}, force: {x:0, y:0}};
+    let lastRightForce = {pos: {x:0, y:0}, force: {x:0, y:0}};
+
+    // Modifica applyWheelForces para guardar las fuerzas y posiciones
+    function applyWheelForces(leftForce, rightForce) {
+      // Calcular posiciones globales de las ruedas
+      const cos = Math.cos(robot.angle);
+      const sin = Math.sin(robot.angle);
+      // Izquierda
+      const leftPos = {
+        x: robot.position.x + wheelOffsetX * cos + wheelOffsetY * sin,
+        y: robot.position.y + wheelOffsetX * sin - wheelOffsetY * cos,
+      };
+      // Derecha
+      const rightPos = {
+        x: robot.position.x + wheelOffsetX * cos - wheelOffsetY * sin,
+        y: robot.position.y + wheelOffsetX * sin + wheelOffsetY * cos,
+      };
+      // Aplicar fuerzas en la dirección del eje X local del robot
+      const fx = Math.cos(robot.angle);
+      const fy = Math.sin(robot.angle);
+      const leftF = { x: leftForce * fx, y: leftForce * fy };
+      const rightF = { x: rightForce * fx, y: rightForce * fy };
+      Body.applyForce(robot, leftPos, leftF);
+      Body.applyForce(robot, rightPos, rightF);
+      // Guardar para debug
+      lastLeftForce = {pos: {...leftPos}, force: {...leftF}};
+      lastRightForce = {pos: {...rightPos}, force: {...rightF}};
+    }
+
+    // Gizmo para ejes locales
+    function drawGizmo(ctx, x, y, angle, length = 60) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      // Eje X (rojo)
+      ctx.strokeStyle = 'red';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(length, 0);
+      ctx.stroke();
+      // Eje Y (verde)
+      ctx.strokeStyle = 'lime';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -length); // Y hacia arriba
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Gizmo para ejes globales (esquina inferior izquierda)
+    function drawWorldGizmo(ctx) {
+      drawGizmo(ctx, 40, canvas.height - 40, 0, 40);
+    }
+
+    // Renderizado personalizado
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Gizmo global
+      drawWorldGizmo(ctx);
+      // Renderizar robot (chasis y ruedas)
+      ctx.save();
+      ctx.translate(robot.position.x, robot.position.y);
+      ctx.rotate(robot.angle);
+      // Chasis
+      ctx.drawImage(
+        chassisImg,
+        -chassisWidth / 2,
+        -chassisHeight / 2,
+        chassisWidth,
+        chassisHeight
+      );
+      // Ruedas
+      // Izquierda
+      ctx.save();
+      ctx.translate(wheelOffsetX, wheelOffsetY);
+      ctx.drawImage(
+        wheelImg,
+        -wheelWidth / 2,
+        -wheelHeight / 2,
+        wheelWidth,
+        wheelHeight
+      );
+      drawGizmo(ctx, 0, 0, 0, 30);
+      ctx.restore();
+      // Derecha
+      ctx.save();
+      ctx.translate(wheelOffsetX, -wheelOffsetY);
+      ctx.drawImage(
+        wheelImg,
+        -wheelWidth / 2,
+        -wheelHeight / 2,
+        wheelWidth,
+        wheelHeight
+      );
+      drawGizmo(ctx, 0, 0, 0, 30);
+      ctx.restore();
+      // Gizmo local del chasis
+      drawGizmo(ctx, 0, 0, 0, 60);
+      ctx.restore();
+
+      // Dibujar fuerzas aplicadas (en coordenadas globales)
+      drawForceArrow(ctx, lastLeftForce.pos.x, lastLeftForce.pos.y, lastLeftForce.force.x, lastLeftForce.force.y, 'magenta');
+      drawForceArrow(ctx, lastRightForce.pos.x, lastRightForce.pos.y, lastRightForce.force.x, lastRightForce.force.y, 'yellow');
+    }
+
+    // --- Controles de teclado para movimiento tipo tanque ---
+    let leftPower = 0;
+    let rightPower = 0;
+    const FORCE = 0.0012; // Fuerza aumentada para giro y avance
+
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+          leftPower = FORCE;
+          rightPower = FORCE;
+          break;
+        case 'ArrowDown':
+          leftPower = -FORCE;
+          rightPower = -FORCE;
+          break;
+        case 'ArrowLeft':
+          leftPower = -FORCE;
+          rightPower = FORCE;
+          break;
+        case 'ArrowRight':
+          leftPower = FORCE;
+          rightPower = -FORCE;
+          break;
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowDown':
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          leftPower = 0;
+          rightPower = 0;
+          break;
+      }
+    });
+
+    // Rozamiento angular para evitar patinaje excesivo
+    let eventsAdded = false;
+    function addFriction() {
+      if (eventsAdded) return;
+      Events.on(engine, 'beforeUpdate', function() {
+        // Rozamiento angular
+        robot.angularVelocity *= 0.96;
+        // Rozamiento lineal (opcional, descomentar si quieres más realismo)
+        // robot.velocity.x *= 0.995;
+        // robot.velocity.y *= 0.995;
+      });
+      eventsAdded = true;
+    }
+    addFriction();
+
+    // Loop de simulación y renderizado
+    const runner = Runner.create();
+    function loop() {
+      applyWheelForces(leftPower, rightPower);
+      Engine.update(engine, 1000 / 60);
+      render();
+      requestAnimationFrame(loop);
+    }
+    // Esperar a que ambas imágenes estén cargadas
+    let imagesLoaded = 0;
+    function checkLoaded() {
+      imagesLoaded++;
+      if (imagesLoaded === 2) loop();
+    }
+    chassisImg.onload = checkLoaded;
+    wheelImg.onload = checkLoaded;
+
+    // Dibuja una flecha desde (x,y) en la dirección de (fx,fy)
+    function drawForceArrow(ctx, x, y, fx, fy, color = 'cyan') {
+      const scale = 1e5; // Escala visual de la flecha
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + fx * scale, y + fy * scale);
+      ctx.stroke();
+      // Flecha
+      const angle = Math.atan2(fy, fx);
+      ctx.beginPath();
+      ctx.moveTo(x + fx * scale, y + fy * scale);
+      ctx.lineTo(x + fx * scale - 10 * Math.cos(angle - 0.3), y + fy * scale - 10 * Math.sin(angle - 0.3));
+      ctx.lineTo(x + fx * scale - 10 * Math.cos(angle + 0.3), y + fy * scale - 10 * Math.sin(angle + 0.3));
+      ctx.lineTo(x + fx * scale, y + fy * scale);
+      ctx.fill();
+      ctx.restore();
+    }
+  </script>
+</body>
+</html> 
