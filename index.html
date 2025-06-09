@@ -21,6 +21,10 @@
   </style>
 </head>
 <body>
+  <div style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(34,34,34,0.9); padding: 10px; border-radius: 8px; color: #fff; font-family: sans-serif;">
+    <label>Offset X (frente): <input id="sliderX" type="range" min="0" max="100" value="40" step="1"> <span id="valX"></span> mm</label><br>
+    <label>Offset Y (lateral): <input id="sliderY" type="range" min="0" max="100" value="60" step="1"> <span id="valY"></span> mm</label>
+  </div>
   <canvas id="sim"></canvas>
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
   <script>
@@ -58,9 +62,21 @@
     const wheelImg = new Image();
     wheelImg.src = 'robot_wheel.png';
 
-    // Posiciones relativas de las ruedas respecto al centro del chasis
-    const wheelOffsetX = chassisWidth * 0.18; // adelante (frente del robot)
-    const wheelOffsetY = chassisHeight * 0.40; // separación lateral aumentada
+    // Sliders para offsets
+    let wheelOffsetX = parseFloat(document.getElementById('sliderX').value);
+    let wheelOffsetY = parseFloat(document.getElementById('sliderY').value);
+    document.getElementById('valX').textContent = wheelOffsetX;
+    document.getElementById('valY').textContent = wheelOffsetY;
+    document.getElementById('sliderX').addEventListener('input', (e) => {
+      wheelOffsetX = parseFloat(e.target.value);
+      document.getElementById('valX').textContent = wheelOffsetX;
+      updateWheelPositions();
+    });
+    document.getElementById('sliderY').addEventListener('input', (e) => {
+      wheelOffsetY = parseFloat(e.target.value);
+      document.getElementById('valY').textContent = wheelOffsetY;
+      updateWheelPositions();
+    });
 
     // Crear cuerpos de las ruedas
     const leftWheel = Bodies.rectangle(
@@ -264,11 +280,28 @@
     }
     addFriction();
 
+    // Función para actualizar la posición de las ruedas en el cuerpo compuesto
+    function updateWheelPositions() {
+      // Actualiza la posición relativa de las partes en el cuerpo compuesto
+      // (Matter.js no soporta mover partes, así que las movemos respecto al centro del robot)
+      Body.setPosition(leftWheel, {
+        x: robot.position.x + wheelOffsetX * Math.cos(robot.angle) + wheelOffsetY * Math.sin(robot.angle),
+        y: robot.position.y + wheelOffsetX * Math.sin(robot.angle) - wheelOffsetY * Math.cos(robot.angle)
+      });
+      Body.setPosition(rightWheel, {
+        x: robot.position.x + wheelOffsetX * Math.cos(robot.angle) - wheelOffsetY * Math.sin(robot.angle),
+        y: robot.position.y + wheelOffsetX * Math.sin(robot.angle) + wheelOffsetY * Math.cos(robot.angle)
+      });
+    }
+    // Llamar al inicio para asegurar posiciones correctas
+    updateWheelPositions();
+
     // Loop de simulación y renderizado
     const runner = Runner.create();
     function loop() {
       applyWheelForces(leftPower, rightPower);
       Engine.update(engine, 1000 / 60);
+      updateWheelPositions();
       render();
       requestAnimationFrame(loop);
     }
