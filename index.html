@@ -21,25 +21,6 @@
   </style>
 </head>
 <body>
-  <div style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(34,34,34,0.9); padding: 10px; border-radius: 8px; color: #fff; font-family: sans-serif;">
-    <label>Offset X (frente): <input id="sliderX" type="range" min="0" max="100" value="25" step="1"> <span id="valX"></span> mm</label><br>
-    <label>Offset Y (lateral): <input id="sliderY" type="range" min="0" max="100" value="63" step="1"> <span id="valY"></span> mm</label><br>
-    <hr style="border: 1px solid #444; margin: 8px 0;">
-    <label>Sensor X (frente): <input id="sliderSensorX" type="range" min="0" max="120" value="90" step="1"> <span id="valSensorX"></span> mm</label><br>
-    <label>Sensor Y (lateral): <input id="sliderSensorY" type="range" min="-80" max="80" value="0" step="1"> <span id="valSensorY"></span> mm</label><br>
-    <label>Alcance (mm): <input id="sliderSensorRange" type="range" min="100" max="1000" value="500" step="10"> <span id="valSensorRange"></span> mm</label><br>
-    <label>FOV (°): <input id="sliderSensorFOV" type="range" min="5" max="90" value="30" step="1"> <span id="valSensorFOV"></span>°</label><br>
-    <label>Masa total (g): <input id="sliderMasa" type="range" min="100" max="2000" value="400" step="10"> <span id="valMasa"></span> g</label><br>
-    <label>Fricción ruedas: <input id="sliderFriccion" type="range" min="0.1" max="3" value="1.2" step="0.01"> <span id="valFriccion"></span></label><br>
-    <label>Fuerza: <input id="sliderFuerza" type="range" min="0.0001" max="0.01" value="0.0005" step="0.0001"> <span id="valFuerza"></span></label><br>
-    <label>Inercia: <input id="sliderInercia" type="range" min="100" max="100000" value="3700" step="100"> <span id="valInercia"></span></label><br>
-    <label>Rozamiento angular: <input id="sliderRozamiento" type="range" min="0.7" max="1" value="0.96" step="0.01"> <span id="valRozamiento"></span></label><br>
-    <label>Freno motor: <input id="sliderFreno" type="range" min="0" max="1" value="0.86" step="0.01"> <span id="valFreno"></span></label><br>
-    <label>Distancia detección (mm): <input id="sliderDeteccion" type="range" min="50" max="500" value="200" step="1"> <span id="valDeteccion"></span> mm</label><br>
-    <label>Ángulo sensor + (°): <input id="sliderAnguloPos" type="range" min="10" max="180" value="90" step="1"> <span id="valAnguloPos"></span>°</label><br>
-    <label>Ángulo sensor - (°): <input id="sliderAnguloNeg" type="range" min="-180" max="-10" value="-90" step="1"> <span id="valAnguloNeg"></span>°</label><br>
-    <label>Tiempo giro robot (ms): <input id="sliderTiempoGiro" type="range" min="100" max="2000" value="500" step="10"> <span id="valTiempoGiro"></span> ms</label><br>
-  </div>
   <canvas id="sim"></canvas>
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
   <script>
@@ -110,128 +91,24 @@
     const sensorWidth = 50; // px
     const sensorHeight = 32; // px
 
-    // Sliders para offsets
-    let wheelOffsetX = parseFloat(document.getElementById('sliderX').value); // será 25 por defecto
-    let wheelOffsetY = parseFloat(document.getElementById('sliderY').value); // será 63 por defecto
-    document.getElementById('valX').textContent = wheelOffsetX;
-    document.getElementById('valY').textContent = wheelOffsetY;
-    document.getElementById('sliderX').addEventListener('input', (e) => {
-      wheelOffsetX = parseFloat(e.target.value);
-      document.getElementById('valX').textContent = wheelOffsetX;
-      updateWheelPositions();
-    });
-    document.getElementById('sliderY').addEventListener('input', (e) => {
-      wheelOffsetY = parseFloat(e.target.value);
-      document.getElementById('valY').textContent = wheelOffsetY;
-      updateWheelPositions();
-    });
-
-    // Sliders para offsets del sensor
-    let sensorOffsetX = parseFloat(document.getElementById('sliderSensorX').value); // 90 por defecto
-    let sensorOffsetY = parseFloat(document.getElementById('sliderSensorY').value); // 0 por defecto
-    document.getElementById('valSensorX').textContent = sensorOffsetX;
-    document.getElementById('valSensorY').textContent = sensorOffsetY;
-    document.getElementById('sliderSensorX').addEventListener('input', (e) => {
-      sensorOffsetX = parseFloat(e.target.value);
-      document.getElementById('valSensorX').textContent = sensorOffsetX;
-    });
-    document.getElementById('sliderSensorY').addEventListener('input', (e) => {
-      sensorOffsetY = parseFloat(e.target.value);
-      document.getElementById('valSensorY').textContent = sensorOffsetY;
-    });
-
-    // Sliders para alcance y FOV del sensor
-    let sensorRange = parseFloat(document.getElementById('sliderSensorRange').value); // 500mm por defecto
-    let sensorFOV = parseFloat(document.getElementById('sliderSensorFOV').value); // 30° por defecto
-    document.getElementById('valSensorRange').textContent = sensorRange;
-    document.getElementById('valSensorFOV').textContent = sensorFOV;
-    document.getElementById('sliderSensorRange').addEventListener('input', (e) => {
-      sensorRange = parseFloat(e.target.value);
-      document.getElementById('valSensorRange').textContent = sensorRange;
-    });
-    document.getElementById('sliderSensorFOV').addEventListener('input', (e) => {
-      sensorFOV = parseFloat(e.target.value);
-      document.getElementById('valSensorFOV').textContent = sensorFOV;
-    });
-
-    // Sliders para masa total y fricción de ruedas
-    let masaTotal = parseFloat(document.getElementById('sliderMasa').value) / 1000; // en kg
-    let friccionRuedas = parseFloat(document.getElementById('sliderFriccion').value);
-    document.getElementById('valMasa').textContent = masaTotal * 1000;
-    document.getElementById('valFriccion').textContent = friccionRuedas;
-    document.getElementById('sliderMasa').addEventListener('input', (e) => {
-      masaTotal = parseFloat(e.target.value) / 1000;
-      document.getElementById('valMasa').textContent = masaTotal * 1000;
-      // 75% masa al chasis, 12.5% a cada rueda
-      Body.setMass(chassis, masaTotal * 0.75);
-      Body.setMass(leftWheel, masaTotal * 0.125);
-      Body.setMass(rightWheel, masaTotal * 0.125);
-    });
-    document.getElementById('sliderFriccion').addEventListener('input', (e) => {
-      friccionRuedas = parseFloat(e.target.value);
-      document.getElementById('valFriccion').textContent = friccionRuedas;
-      leftWheel.friction = friccionRuedas;
-      rightWheel.friction = friccionRuedas;
-      leftWheel.frictionStatic = friccionRuedas * 1.5;
-      rightWheel.frictionStatic = friccionRuedas * 1.5;
-      leftWheel.frictionAir = 0.01 + friccionRuedas * 0.01;
-      rightWheel.frictionAir = 0.01 + friccionRuedas * 0.01;
-    });
-
-    // Sliders para fuerza, inercia y rozamiento angular
-    let FORCE = parseFloat(document.getElementById('sliderFuerza').value);
-    let inertiaValue = parseFloat(document.getElementById('sliderInercia').value);
-    let angularFriction = parseFloat(document.getElementById('sliderRozamiento').value);
-    document.getElementById('valFuerza').textContent = FORCE;
-    document.getElementById('valInercia').textContent = inertiaValue;
-    document.getElementById('valRozamiento').textContent = angularFriction;
-    document.getElementById('sliderFuerza').addEventListener('input', (e) => {
-      FORCE = parseFloat(e.target.value);
-      document.getElementById('valFuerza').textContent = FORCE;
-    });
-    document.getElementById('sliderInercia').addEventListener('input', (e) => {
-      inertiaValue = parseFloat(e.target.value);
-      document.getElementById('valInercia').textContent = inertiaValue;
-      Body.setInertia(robot, inertiaValue); // Asegura que el valor se aplique al robot
-    });
-    document.getElementById('sliderRozamiento').addEventListener('input', (e) => {
-      angularFriction = parseFloat(e.target.value);
-      document.getElementById('valRozamiento').textContent = angularFriction;
-    });
-
-    // Slider para freno motor
-    let frenoMotor = parseFloat(document.getElementById('sliderFreno').value);
-    document.getElementById('valFreno').textContent = frenoMotor;
-    document.getElementById('sliderFreno').addEventListener('input', (e) => {
-      frenoMotor = parseFloat(e.target.value);
-      document.getElementById('valFreno').textContent = frenoMotor;
-    });
-
-    // Sliders para lógica autónoma
-    let distanciaDeteccion = parseFloat(document.getElementById('sliderDeteccion').value);
-    let anguloSensorPos = parseFloat(document.getElementById('sliderAnguloPos').value);
-    let anguloSensorNeg = parseFloat(document.getElementById('sliderAnguloNeg').value);
-    let tiempoGiroRobot = parseFloat(document.getElementById('sliderTiempoGiro').value);
-    document.getElementById('valDeteccion').textContent = distanciaDeteccion;
-    document.getElementById('valAnguloPos').textContent = anguloSensorPos;
-    document.getElementById('valAnguloNeg').textContent = anguloSensorNeg;
-    document.getElementById('valTiempoGiro').textContent = tiempoGiroRobot;
-    document.getElementById('sliderDeteccion').addEventListener('input', (e) => {
-      distanciaDeteccion = parseFloat(e.target.value);
-      document.getElementById('valDeteccion').textContent = distanciaDeteccion;
-    });
-    document.getElementById('sliderAnguloPos').addEventListener('input', (e) => {
-      anguloSensorPos = parseFloat(e.target.value);
-      document.getElementById('valAnguloPos').textContent = anguloSensorPos;
-    });
-    document.getElementById('sliderAnguloNeg').addEventListener('input', (e) => {
-      anguloSensorNeg = parseFloat(e.target.value);
-      document.getElementById('valAnguloNeg').textContent = anguloSensorNeg;
-    });
-    document.getElementById('sliderTiempoGiro').addEventListener('input', (e) => {
-      tiempoGiroRobot = parseFloat(e.target.value);
-      document.getElementById('valTiempoGiro').textContent = tiempoGiroRobot;
-    });
+    // --- Valores fijos (antes dependían de sliders) ---
+    let wheelOffsetX = 25;
+    let wheelOffsetY = 63;
+    let sensorOffsetX = 90;
+    let sensorOffsetY = 0;
+    let sensorRange = 500;
+    let sensorFOV = 30;
+    let masaTotal = 420 / 1000; // en kg
+    let friccionRuedas = 1.2;
+    let FORCE = 0.0001;
+    let inertiaValue = 6400;
+    let angularFriction = 0.96;
+    let frenoMotor = 0.14;
+    let distanciaDeteccion = 200;
+    let anguloSensorPos = 90;
+    let anguloSensorNeg = -90;
+    let tiempoGiroRobot = 1010;
+    // --- Fin valores fijos ---
 
     // Crear cuerpos de las ruedas
     const leftWheel = Bodies.rectangle(
@@ -284,7 +161,7 @@
       parts: [chassis, leftWheel, rightWheel]
     });
     World.add(world, robot);
-    // Aplicar inercia inicial del slider
+    // Aplicar inercia inicial
     Body.setInertia(robot, inertiaValue);
 
     // Variables globales para debug de fuerzas
@@ -454,16 +331,6 @@
         sensorHeight
       );
       drawGizmo(ctx, 0, 0, 0, 30); // Gizmo local del sensor
-      // Mostrar distancia medida como texto en la zona de detección
-      // const dist = medirDistanciaSensor(sensorCurrentAngle);
-      // ctx.save();
-      // ctx.fillStyle = '#fff';
-      // ctx.font = 'bold 18px sans-serif';
-      // ctx.textAlign = 'center';
-      // ctx.textBaseline = 'middle';
-      // ctx.globalAlpha = 0.9;
-      // ctx.fillText(Math.round(dist) + ' mm', 0, dist/2); // Eje Y positivo local
-      // ctx.restore();
       ctx.restore();
       // Gizmo local del chasis
       drawGizmo(ctx, 0, 0, 0, 60);
@@ -482,23 +349,30 @@
     let leftPower = 0;
     let rightPower = 0;
 
+    // Función para aplicar variación aleatoria a la fuerza
+    function fuerzaConVariacion(base) {
+      const variacion = 0.55; // 15%
+      const factor = 1 + (Math.random() * 2 - 1) * variacion;
+      return base * factor;
+    }
+
     window.addEventListener('keydown', (e) => {
       switch (e.key) {
         case 'ArrowUp':
-          leftPower = FORCE;
-          rightPower = FORCE;
+          leftPower = fuerzaConVariacion(FORCE);
+          rightPower = fuerzaConVariacion(FORCE);
           break;
         case 'ArrowDown':
-          leftPower = -FORCE;
-          rightPower = -FORCE;
+          leftPower = fuerzaConVariacion(-FORCE);
+          rightPower = fuerzaConVariacion(-FORCE);
           break;
         case 'ArrowLeft':
-          leftPower = -FORCE;
-          rightPower = FORCE;
+          leftPower = fuerzaConVariacion(-FORCE);
+          rightPower = fuerzaConVariacion(FORCE);
           break;
         case 'ArrowRight':
-          leftPower = FORCE;
-          rightPower = -FORCE;
+          leftPower = fuerzaConVariacion(FORCE);
+          rightPower = fuerzaConVariacion(-FORCE);
           break;
       }
     });
@@ -529,10 +403,6 @@
             y: robot.velocity.y * frenoMotor 
           }); // Freno lineal configurable
         }
-        // Rozamiento lineal (opcional, descomentar si quieres más realismo)
-        // robot.velocity.x *= 0.995;
-        // robot.velocity.y *= 0.995;
-
         aplicarFriccionLateral(); // Fricción lateral en cada frame
       });
       eventsAdded = true;
@@ -567,8 +437,8 @@
             estadoRobot = 'giraSensorPos';
             sensorTargetAngle = anguloSensorPos * Math.PI / 180;
           } else {
-            leftPower = FORCE;
-            rightPower = FORCE;
+            leftPower = fuerzaConVariacion(FORCE);
+            rightPower = fuerzaConVariacion(FORCE);
           }
           break;
         }
@@ -618,11 +488,11 @@
             tiempoGiroRestante = tiempoGiroRobot;
             // Usar la decisión guardada
             if (giroDerecha) {
-              leftPower = FORCE;
-              rightPower = -FORCE;
+              leftPower = fuerzaConVariacion(FORCE);
+              rightPower = fuerzaConVariacion(-FORCE);
             } else {
-              leftPower = -FORCE;
-              rightPower = FORCE;
+              leftPower = fuerzaConVariacion(-FORCE);
+              rightPower = fuerzaConVariacion(FORCE);
             }
           }
           break;
