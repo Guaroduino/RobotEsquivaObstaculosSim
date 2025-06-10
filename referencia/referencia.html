@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino Line Follower Advanced Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1976d2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="assets/Logo%20guaroduino.png">
+</head>
+<body>
+    <header>
+        <div class="header-flex">
+            <div class="header-title-nav">
+                <h1>Simulador de Seguidor de Lineas</h1>
+                <nav class="tabs">
+                    <button class="tab-button active" data-tab="introduccion">Introducción</button>
+                    <button class="tab-button" data-tab="simulation">Simulación</button>
+                    <button class="tab-button" data-tab="code-editor">Editor de Código</button>
+                    <button class="tab-button" data-tab="robot-editor">Editor de Robot</button>
+                    <button class="tab-button" data-tab="track-editor">Editor de Pista</button>
+                </nav>
+            </div>
+            <img src="assets/Logo%20guaroduino.png" alt="Logo Guaroduino" class="header-logo">
+        </div>
+    </header>
+
+    <main>
+        <!-- Introducción Tab -->
+        <div id="introduccion" class="tab-content active">
+            <div style="max-width:900px;margin:2em auto 0 auto;text-align:justify;">
+                <h2>Introducción</h2>
+                <h1 style="text-align:center;">🤖 Simulador de Robots Seguidores de Líneas</h1>
+                <p>
+                    Bienvenido a nuestro simulador educativo de robots seguidores de líneas. Aquí aprenderás qué son estos robots, cómo funcionan, cómo se programan y cómo puedes experimentar con ellos de forma virtual antes de construirlos físicamente.
+                </p>
+                <hr>
+                <h3>¿Qué es un Robot Seguidor de Líneas?</h3>
+                <p>
+                    Un <strong>robot seguidor de líneas</strong> es un vehículo autónomo que detecta y sigue una línea en el suelo, normalmente de color negro sobre fondo blanco. Son populares en educación y competencias de robótica porque enseñan conceptos de sensores, lógica de control y programación.
+                </p>
+                <ol>
+                    <li><b>Sensar:</b> Detectar la posición de la línea con sensores infrarrojos.</li>
+                    <li><b>Decidir:</b> Aplicar una lógica de control para corregir la trayectoria.</li>
+                    <li><b>Actuar:</b> Mover los motores para mantenerse sobre la línea.</li>
+                </ol>
+                <hr>
+                <h3>Componentes Básicos de un Robot Físico</h3>
+                <ul>
+                    <li><b>Chasis:</b> Estructura que sostiene los componentes.</li>
+                    <li><b>Microcontrolador (Arduino):</b> El "cerebro" que procesa la información y controla los motores.</li>
+                    <li><b>Sensores IR:</b> Detectan la línea (negro/blanco).</li>
+                    <li><b>Motores y ruedas:</b> Permiten el movimiento y los giros.</li>
+                    <li><b>Controlador de motores:</b> Intermediario entre Arduino y motores.</li>
+                    <li><b>Fuente de alimentación:</b> Baterías o pilas.</li>
+                    <li><b>Rueda loca:</b> Tercer punto de apoyo para facilitar los giros.</li>
+                </ul>
+                <hr>
+                <h3>¿Cómo se programa un robot seguidor de líneas?</h3>
+                <p>
+                    Se utiliza el entorno Arduino IDE y un lenguaje similar a C/C++. El ciclo básico es:
+                </p>
+                <ol>
+                    <li><b>Leer sensores:</b> Obtener valores de los sensores IR.</li>
+                    <li><b>Tomar decisiones:</b> Determinar la posición respecto a la línea y decidir el movimiento.</li>
+                    <li><b>Controlar motores:</b> Ajustar velocidad y dirección según la lógica de control.</li>
+                </ol>
+                <hr>
+                <h3>¿Qué puedes hacer en este simulador?</h3>
+                <ul>
+                    <li><b>Diseñar y cargar pistas</b> de diferentes dificultades.</li>
+                    <li><b>Configurar el robot virtual:</b> Ajustar número y posición de sensores, velocidad, etc.</li>
+                    <li><b>Programar el robot:</b> Escribir y probar tu código de control en tiempo real.</li>
+                    <li><b>Observar y depurar:</b> Ver el comportamiento del robot y los mensajes del monitor serial.</li>
+                    <li><b>Iterar y mejorar:</b> Modificar parámetros y código para optimizar el desempeño.</li>
+                </ul>
+                <hr>
+                <h3>¿Por qué usar un simulador?</h3>
+                <ul>
+                    <li>Experimenta y aprende sin riesgo ni costo de hardware.</li>
+                    <li>Prueba diferentes algoritmos y configuraciones rápidamente.</li>
+                    <li>Desarrolla habilidades de programación y robótica de forma práctica y divertida.</li>
+                </ul>
+                <p style="text-align:center; margin-top:2em;">
+                    <b>¡Explora, experimenta y conviértete en un experto en robots seguidores de líneas!</b><br>
+                    <a href="https://svpsteamclub.github.io/Sim/" target="_blank">Ir al simulador en línea</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Simulation Tab -->
+        <div id="simulation" class="tab-content">
+            <div class="simulation-layout simulation-double-column">
+                <div class="simulation-view">
+                    <canvas id="simulationDisplayCanvas" width="700" height="500"></canvas>
+                    <div class="simulation-controls">
+                        <button id="startSimButton">Iniciar</button>
+                        <button id="stopSimButton" disabled>Detener</button>
+                        <button id="resetSimButton">Reiniciar Sim</button>
+                        <button id="placeStartLineSimButton">Ubicar Línea de Comienzo</button>
+                    </div>
+                </div>
+                <div class="simulation-parameters">
+                    <details id="simParamsDetails">
+                        <summary><h3 style="display:inline; font-size:1.1em; font-weight:600; margin:0;">Parámetros de Simulación</h3></summary>
+                        <label for="timeStep">Paso de Tiempo (s):</label>
+                        <input type="number" id="timeStep" value="0.01" step="0.001" min="0.001">
+                        <label for="maxRobotSpeed">Vel. Máx. Robot (m/s):</label>
+                        <input type="number" id="maxRobotSpeed" value="1.0" step="0.05" min="0.05">
+                        <label for="motorEfficiency">Eficiencia Motor (0-1):</label>
+                        <input type="number" id="motorEfficiency" value="0.85" step="0.01" min="0.1" max="1">
+                        <label for="motorResponse">Respuesta Motor (0-1):</label>
+                        <input type="number" id="motorResponse" value="0.1" step="0.01" min="0.01" max="1">
+                        <label for="sensorNoise">Ruido Sensor (0-1):</label>
+                        <input type="number" id="sensorNoise" value="0.0" step="0.01" min="0" max="1">
+                        <label for="movementPerturb">Perturb. Movim. (0-1):</label>
+                        <input type="number" id="movementPerturb" value="0.0" step="0.01" min="0" max="1">
+                        <label for="motorDeadband">PWM Banda Muerta Motor:</label>
+                        <input type="number" id="motorDeadband" value="40" step="1" min="0">
+                        <label for="lineThreshold">Umbral Línea (0-255):</label>
+                        <input type="number" id="lineThreshold" value="100" step="1" min="0" max="255">
+                        <button id="applySimParamsButton">Aplicar Parámetros</button>
+                    </details>
+                </div>
+                <div class="sim-monitor-column">
+                    <h4>Monitor Serial</h4>
+                    <pre id="serialMonitorOutput"></pre>
+                    <button id="clearSerialButton" type="button">Limpiar Serial</button>
+                    <h4>Cronómetro</h4>
+                    <pre id="lapTimerOutput">Vueltas: 0 | Mejor: --:--:--- | Actual: --:--:---</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Editor Tab -->
+        <div id="code-editor" class="tab-content">
+            <div class="code-editor-layout">
+                <div class="code-editor-container">
+                    <div class="code-template-selector">
+                        <label for="codeTemplate">Seleccionar tipo de control:</label>
+                        <select id="codeTemplate" class="template-select">
+                            <option value="custom">Código Personalizado</option>
+                            <option value="onoff" selected>Control On/Off Simple</option>
+                            <option value="continuous-turn">Control On/Off con Giro Continuo</option>
+                        </select>
+                    </div>
+                    <div id="monacoContainer" style="height: 600px; border: 1px solid #ccc;"></div>
+                    <div style="display:flex; gap:0.5em; margin:1em 0;">
+                        <button id="downloadCodeButton" style="flex:1;">Descargar Código</button>
+                        <label for="uploadCodeInput" class="file-input-label" style="flex:1; text-align:center; cursor:pointer;">Cargar Código
+                            <input type="file" id="uploadCodeInput" accept=".txt,.js" style="display:none;">
+                        </label>
+                    </div>
+                    <div class="editor-help">
+                        <h2>Editor de Código (Arduino-like JavaScript)</h2>
+                        <h3>¿Cómo usar este editor?</h3>
+                        <p>¡Aquí puedes escribir el código que controla tu robot! Cambia el tipo de control arriba, edita el código y mira cómo responde el robot en la simulación. Si te equivocas, no pasa nada, puedes volver a intentarlo.</p>
+                        <h4>Esquemas de Control Disponibles</h4>
+                        <ul>
+                            <li><strong>On/Off Simple:</strong> Gira completamente a la izquierda o derecha según el sensor activado. Ejemplo:
+                                <pre style="background:#f8f9fa; border-radius:6px; padding:0.5em;">if (digitalRead(LEFT_SENSOR_PIN) == 0) {
+    // Gira a la izquierda
+} else if (digitalRead(RIGHT_SENSOR_PIN) == 0) {
+    // Gira a la derecha
+} else {
+    // Avanza recto
+}</pre>
+                            </li>
+                            <li><strong>On/Off con Giro Continuo:</strong> Si el robot pierde la línea, sigue girando en la última dirección usada. Útil para curvas cerradas.</li>
+                            <li><strong>Personalizado:</strong> Escribe tu propia lógica de control usando las funciones disponibles.</li>
+                        </ul>
+                        <h4>¿Cómo referenciar los sensores en tu código?</h4>
+                        <ul>
+                            <li><b>Para 2 sensores:</b> <code>LEFT_SENSOR_PIN</code> (2), <code>RIGHT_SENSOR_PIN</code> (3)</li>
+                            <li><b>Para 3 sensores:</b> <code>LEFT_SENSOR_PIN</code> (2), <code>CENTER_SENSOR_PIN</code> (3), <code>RIGHT_SENSOR_PIN</code> (4)</li>
+                            <li><b>Para 4 sensores:</b> <code>FAR_LEFT_SENSOR_PIN</code> (2), <code>LEFT_SENSOR_PIN</code> (3), <code>RIGHT_SENSOR_PIN</code> (4), <code>FAR_RIGHT_SENSOR_PIN</code> (5)</li>
+                            <li><b>Para 5 sensores:</b> <code>FAR_LEFT_SENSOR_PIN</code> (2), <code>LEFT_SENSOR_PIN</code> (3), <code>CENTER_SENSOR_PIN</code> (4), <code>RIGHT_SENSOR_PIN</code> (5), <code>FAR_RIGHT_SENSOR_PIN</code> (6)</li>
+                        </ul>
+                        <p>Usa solo los pines que correspondan a la cantidad de sensores de tu robot. Por ejemplo, si tienes 4 sensores, puedes leerlos así:</p>
+                        <pre style="background:#f8f9fa; border-radius:6px; padding:0.5em;">let sFL = digitalRead(FAR_LEFT_SENSOR_PIN);
+let sL = digitalRead(LEFT_SENSOR_PIN);
+let sR = digitalRead(RIGHT_SENSOR_PIN);
+let sFR = digitalRead(FAR_RIGHT_SENSOR_PIN);</pre>
+                        <p>Si tienes 2 o 3 sensores, simplemente ignora los que no existen. El simulador asigna los pines automáticamente según la cantidad de sensores seleccionada en el editor de robot.</p>
+</ul>
+                        <h4>Funciones que puedes usar:</h4>
+                        <ul>
+                            <li><strong>setup()</strong>: Se ejecuta una vez al comenzar. Aquí preparas todo.</li>
+                            <li><strong>loop()</strong>: Se repite muchas veces. Aquí va la lógica principal.</li>
+                            <li><strong>digitalRead(pin)</strong>: Lee si un sensor está sobre la línea (0) o fuera (1).</li>
+                            <li><strong>analogWrite(pin, valor)</strong>: Cambia la velocidad de los motores (0 a 255).</li>
+                            <li><strong>(...)</strong> y <strong>Serial.println(...)</strong>: Muestra mensajes en el Monitor Serial.</li>
+                            <li><strong>delay(ms)</strong>: Espera el tiempo que le digas (en milisegundos).</li>
+                        </ul>
+                        <h4>¿Cómo escribir tu lógica de control?</h4>
+                        <p>Puedes usar estructuras de control como <b>if</b>, <b>else</b>, y operadores como <b>===</b> (igualdad estricta), <b>=</b> (asignación), <b>&gt;</b>, <b>&lt;</b>, <b>&amp;&amp;</b> (y lógico), <b>||</b> (o lógico) para tomar decisiones en tu código. Ejemplo básico:</p>
+                        <pre style="background:#f8f9fa; border-radius:6px; padding:0.5em;">if (digitalRead(LEFT_SENSOR_PIN) === 0) {
+    // Gira a la izquierda
+} else if (digitalRead(RIGHT_SENSOR_PIN) === 0) {
+    // Gira a la derecha
+} else {
+    // Avanza recto
+}
+
+let velocidad = 100;
+if (digitalRead(CENTER_SENSOR_PIN) === 0) {
+    velocidad = 150;
+}</pre>
+                        <p>Recuerda: <b>===</b> compara igualdad, <b>=</b> asigna valores, y puedes anidar condiciones para crear comportamientos más complejos.</p>
+                        <h4>Funciones que puedes usar:</h4>
+                        <ul>
+                            <li><strong>setup()</strong>: Se ejecuta una vez al comenzar. Aquí preparas todo.</li>
+                            <li><strong>loop()</strong>: Se repite muchas veces. Aquí va la lógica principal.</li>
+                            <li><strong>digitalRead(pin)</strong>: Lee si un sensor está sobre la línea (0) o fuera (1).</li>
+                            <li><strong>analogWrite(pin, valor)</strong>: Cambia la velocidad de los motores (0 a 255).</li>
+                            <li><strong>(...)</strong> y <strong>Serial.println(...)</strong>: Muestra mensajes en el Monitor Serial.</li>
+                            <li><strong>delay(ms)</strong>: Espera el tiempo que le digas (en milisegundos).</li>
+                        </ul>
+                        <p>¡Diviértete probando y aprendiendo cómo hacer que tu robot siga la línea!</p>
+                    </div>
+                </div>
+                <div class="serial-and-explanation">
+                    <div class="code-explanation">
+                        <h3>Guía del Código</h3>
+                        <p>Este editor te permite modificar el comportamiento del robot seguidor de línea. El código simula un programa de Arduino y contiene dos funciones principales:</p>
+                        <h4>Funciones Principales:</h4>
+                        <ul>
+                            <li><strong>setup()</strong>: Se ejecuta una vez al inicio. Configura los pines y la comunicación serial.</li>
+                            <li><strong>loop()</strong>: Se ejecuta continuamente. Lee los sensores y controla los motores.</li>
+                        </ul>
+                        <h4>Pines y Variables Importantes:</h4>
+                        <ul>
+                            <li><strong>Sensores (digitalRead)</strong>: LEFT_SENSOR_PIN(2), CENTER_SENSOR_PIN(3), RIGHT_SENSOR_PIN(4)</li>
+                            <li><strong>Motores (analogWrite)</strong>: MOTOR_LEFT_PWM(6), MOTOR_RIGHT_PWM(5)</li>
+                            <li>Los sensores retornan 0 cuando están sobre la línea negra y 1 cuando están fuera</li>
+                            <li>Los motores aceptan valores entre 0 (parado) y 255 (máxima velocidad)</li>
+                        </ul>
+                        <h4>Tipos de Control Disponibles:</h4>
+                        <ul>
+                            <li><strong>On/Off</strong>: Control básico que solo gira a la izquierda o derecha según el sensor activado.</li>
+                            <li><strong>Proporcional</strong>: Ajusta la velocidad de giro según qué tan lejos está de la línea.</li>
+                            <li><strong>PID</strong>: Control avanzado que considera el error actual (P), acumulado (I) y su variación (D).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Robot Editor Tab -->
+        <div id="robot-editor" class="tab-content">
+            <div class="robot-editor-layout">
+                <div class="robot-preview">
+                    <h3>Vista Previa del Robot</h3>
+                    <canvas id="robotPreviewCanvas" width="300" height="300"></canvas>
+                    <div class="robot-parts-palette">
+                        <h4>Partes Decorativas</h4>
+                        <div id="robotPartsPalette">
+                            <!-- Parts will be loaded here by JS -->
+                        </div>
+                    </div>
+                    <div class="robot-editor-help" style="margin-top:1em; font-size:0.95em; color:#234e70; background:#f8f9fa; border-radius:8px; padding:0.8em 1em;">
+                        <strong>¿Cómo usar el editor de robot?</strong><br>
+                        <ul style="margin:0.5em 0 0 1.2em; padding:0;">
+                            <li>Haz <b>click</b> en una pieza y luego <b>arrástrala</b> al robot para ubicarla.</li>
+                            <li><b>Click y arrastrar</b> sobre una pieza ya colocada para moverla.</li>
+                            <li><b>Doble click</b> sobre una pieza para rotarla.</li>
+                            <li>Activa <b>Modo Borrar</b> y haz <b>doble click</b> en una pieza para eliminarla.</li>
+                            <li>Haz click en <b>Aplicar Geometría y Reiniciar Sim</b> para cargar el robot en el simulador.</li>
+                            <li>Usa <b>Guardar Robot</b> para descargar tu diseño y <b>Cargar Robot</b> para restaurarlo.</li>
+                            <li>Puedes cargar un robot prearmado desde la lista desplegable.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="robot-parameters">
+                    <h3>Geometría del Robot (en milimetros)</h3>
+                    <label for="robotWidth">
+                        Ancho (dist. ruedas) (m):
+                        <input type="number" id="robotWidth" value="0.10" step="0.01" min="0.02">
+                    </label>
+                    
+                    <label for="sensorOffset">
+                        Offset Sensores Delante (m):
+                        <input type="number" id="sensorOffset" value="0.05" step="0.005" min="0">
+                    </label>
+                    
+                    <label for="sensorSpread">
+                        Separación Sensores Laterales (m):
+                        <input type="number" id="sensorSpread" value="0.03" step="0.005" min="0">
+                    </label>
+                    
+                    <label for="sensorDiameter">
+                        Diámetro Sensor (m):
+                        <input type="number" id="sensorDiameter" value="0.005" step="0.001" min="0.001">
+                    </label>
+                    
+                    <label for="sensorCount">
+                        Número de Sensores IR:
+                        <select id="sensorCount">
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </label>
+                    
+                    <button id="applyRobotGeometryButton">Aplicar Geometría y Reiniciar Sim</button>
+                    <div style="margin-top: 1em; display: flex; gap: 0.5em; align-items: center;">
+                        <button id="saveRobotButton" style="flex:1; text-align:center;">Guardar Robot</button>
+                        <label for="loadRobotInput" class="file-input-label" style="flex:1; text-align:center;">Cargar Robot (.json)</label>
+                        <input type="file" id="loadRobotInput" accept=".json" style="display:none;">
+                    </div>
+                    <div style="margin-top: 1em;">
+                        <label for="robotSelectionDropdown">Seleccionar Robot Predefinido:</label>
+                        <select id="robotSelectionDropdown" style="width: 100%; margin-top: 0.5em;">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track Editor Tab -->
+        <div id="track-editor" class="tab-content">
+            <div class="track-editor-layout">
+                <div class="track-editor-grid">
+                    <canvas id="trackEditorCanvas"></canvas> <!-- Size set by JS -->
+                </div>
+                <div class="track-editor-controls">
+                    <h3>Controles de Pista</h3>
+                    <label for="trackGridSize">Tamaño Grid:</label>
+                    <select id="trackGridSize">
+                        <option value="3x3">3x3</option>
+                        <option value="4x4" selected>4x4</option>
+                        <option value="5x5">5x5</option>
+                    </select>
+                    <label for="trackModeDropdown">Categoria:</label>
+                    <select id="trackModeDropdown">
+                        <option value="aventura">Aventura</option>
+                        <option value="desafio">Desafío</option>
+                        <option value="innovacion">Innovación</option>
+                    </select>
+                    <button id="generateRandomTrack">Generar Pista Aleatoria (Loop)</button>
+                    <button id="exportTrackToSimulator">Usar en Simulación</button>
+                    <button id="clearTrackButton" class="danger" style="margin-top:0.5em;">Limpiar Pista</button>
+                    <hr>
+                    <div style="display: flex; gap: 0.5em; align-items: center; margin-top: 1em;">
+                        <button id="saveTrackDesignButton" style="flex:1; text-align:center;">Guardar Diseño</button>
+                        <label for="loadTrackDesignInput" class="file-input-label" style="flex:1; text-align:center;">Cargar Diseño (.json)</label>
+                        <input type="file" id="loadTrackDesignInput" accept=".json,.trackdesign" style="display:none;">
+                    </div>
+                </div>
+                <div class="track-parts-palette-container">
+                    <h3>Paleta de Piezas</h3>
+                    <div id="trackPartsPalette">
+                        <!-- Piezas se cargarán aquí por JS -->
+                    </div>
+                    <p class="small-text">Click para Ubicar, Doble-Click para rotar.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Simulador Avanzado de Seguidor de Línea - 2025. Ing. Luis Fernando Corado</p>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('service-worker.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registrado con éxito:', registration.scope);
+            }, function(err) {
+              console.log('Error al registrar el ServiceWorker:', err);
+            });
+        });
+      }
+    </script>
+</body>
+</html>

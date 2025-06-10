@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Simulación Matter.js Cenital</title>
+  <link rel="stylesheet" href="referencia/style.css">
   <style>
     html, body {
       margin: 0;
@@ -11,6 +12,19 @@
       height: 100vh;
       overflow: hidden;
       background: #fff; /* Fondo blanco */
+    }
+    #sliders {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 12px 18px 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      z-index: 10;
+      max-width: 340px;
+      min-width: 260px;
+      width: 320px;
     }
     #sim {
       display: block;
@@ -21,7 +35,70 @@
   </style>
 </head>
 <body>
-  <canvas id="sim"></canvas>
+    <div id="sliders">
+      <div style="margin-bottom:2px;text-align:left;">
+        <img src="referencia/assets/Logo guaroduino.png" alt="Logo Guaroduino" style="height:44px;user-select:none;pointer-events:none;opacity:0.92;display:block;">
+      </div>
+      <h2 style="margin:0 0 6px 0;font-size:1.02rem;color:#1976d2;">Parámetros del robot</h2>
+      <p style="margin:0 0 10px 0;font-size:0.89rem;color:#444;line-height:1.35;white-space:pre-line;">
+Ajusta la fuerza de los motores, los ángulos del sensor ultrasónico y los tiempos de reacción del robot.
+Experimenta con los valores para observar diferentes comportamientos de evasión.
+      </p>
+      <div>
+        <label>Fuerza de motor: <span id="forceVal"></span></label><br>
+        <input type="range" id="forceSlider" min="0" max="255" step="1" value="170">
+      </div>
+      <div>
+        <label>Ángulo sensor + (°): <span id="angPosVal"></span></label><br>
+        <input type="range" id="angPosSlider" min="0" max="90" step="1" value="90">
+      </div>
+      <div>
+        <label>Ángulo sensor - (°): <span id="angNegVal"></span></label><br>
+        <input type="range" id="angNegSlider" min="-90" max="0" step="1" value="-90">
+      </div>
+      <div>
+        <label>Distancia umbral (mm): <span id="distUmbralVal"></span></label><br>
+        <input type="range" id="distUmbralSlider" min="50" max="400" step="1" value="200">
+      </div>
+      <div>
+        <label>Tiempo giro robot (ms): <span id="tiempoGiroVal"></span></label><br>
+        <input type="range" id="tiempoGiroSlider" min="200" max="2000" step="10" value="1010">
+      </div>
+      <div>
+        <label>Tiempo retroceso (ms): <span id="tiempoRetrocesoVal"></span></label><br>
+        <input type="range" id="tiempoRetrocesoSlider" min="0" max="1000" step="10" value="200">
+      </div>
+      <h2 style="margin:16px 0 6px 0;font-size:1.02rem;color:#1976d2;">Obstáculos y edición</h2>
+      <p style="margin:0 0 10px 0;font-size:0.89rem;color:#444;line-height:1.35;white-space:pre-line;">
+Arrastra una figura al área de simulación para crear un obstáculo.
+Haz clic en los controles para mover, rotar o escalar cada obstáculo.
+Activa el modo borrar para eliminar obstáculos.
+      </p>
+      <!-- Panel de formas para arrastrar y soltar -->
+      <div id="shapesPanel" style="display:flex;gap:18px;margin-top:8px;align-items:center;justify-content:center;">
+        <div class="shape-icon" draggable="true" data-shape="rect" title="Rectángulo" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:grab;background:rgba(25,118,210,0.08);border-radius:7px;">
+          <svg width="28" height="28"><rect x="4" y="8" width="20" height="12" rx="3" fill="#1976d2"/></svg>
+        </div>
+        <div class="shape-icon" draggable="true" data-shape="circle" title="Círculo" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:grab;background:rgba(25,118,210,0.08);border-radius:7px;">
+          <svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="#388e3c"/></svg>
+        </div>
+        <div class="shape-icon" draggable="true" data-shape="pentagon" title="Pentágono" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:grab;background:rgba(25,118,210,0.08);border-radius:7px;">
+          <svg width="28" height="28"><polygon points="14,4 25,12 21,25 7,25 3,12" fill="#fbc02d"/></svg>
+        </div>
+        <div class="shape-icon" draggable="true" data-shape="triangle" title="Triángulo" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:grab;background:rgba(25,118,210,0.08);border-radius:7px;">
+          <svg width="28" height="28"><polygon points="14,5 25,23 3,23" fill="#d32f2f"/></svg>
+        </div>
+      </div>
+      <!-- Botón de modo borrar debajo de las figuras -->
+      <div style="margin-top:10px;text-align:center;">
+        <button id="deleteModeBtn" style="padding:7px 18px;font-size:1rem;border-radius:7px;background:#fff;color:#d32f2f;border:2px solid #d32f2f;cursor:pointer;">Modo borrar</button>
+      </div>
+      <!-- Botón de pausa/reanudar -->
+      <div style="margin-top:12px;text-align:center;">
+        <button id="pauseBtn" style="padding:7px 18px;font-size:1rem;border-radius:7px;background:#1976d2;color:#fff;border:none;cursor:pointer;">Comenzar simulación</button>
+      </div>
+    </div>
+    <canvas id="sim"></canvas>
   <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
   <script>
     // Configuración inicial
@@ -108,7 +185,115 @@
     let anguloSensorPos = 90;
     let anguloSensorNeg = -90;
     let tiempoGiroRobot = 1010;
+    let tiempoRetrocesoRobot = 200;
+    let sensorAnimSpeed = Math.PI / 60;
     // --- Fin valores fijos ---
+
+    // Sliders para parámetros
+    function updateSliderDisplays() {
+      // Fuerza: mostrar valor 0-255
+      document.getElementById('forceVal').textContent = Math.round(forceSlider.value);
+      document.getElementById('angPosVal').textContent = anguloSensorPos;
+      document.getElementById('angNegVal').textContent = anguloSensorNeg;
+      // Distancia umbral: mostrar en mm (1px = 1mm)
+      document.getElementById('distUmbralVal').textContent = distanciaDeteccion + ' mm';
+      document.getElementById('tiempoGiroVal').textContent = tiempoGiroRobot;
+      document.getElementById('tiempoRetrocesoVal').textContent = tiempoRetrocesoRobot;
+    }
+    // Ajuste de fuerza: slider 0-255, mapea a 0-0.00015
+    const forceSlider = document.getElementById('forceSlider');
+    forceSlider.min = 0;
+    forceSlider.max = 255;
+    forceSlider.step = 1;
+    forceSlider.value = 170; // valor inicial equivalente a 0.0001
+    function sliderToForce(val) {
+      return (val / 255) * 0.00015;
+    }
+    forceSlider.addEventListener('input', function() {
+      FORCE = sliderToForce(this.value);
+      updateSliderDisplays();
+    });
+    // Ángulo sensor +: 0 a 90
+    const angPosSlider = document.getElementById('angPosSlider');
+    angPosSlider.min = 0;
+    angPosSlider.max = 90;
+    angPosSlider.step = 1;
+    angPosSlider.value = 90;
+    angPosSlider.addEventListener('input', function() {
+      anguloSensorPos = parseInt(this.value);
+      // Si el robot está en cualquier estado de giro de sensor, forzar transición segura
+      if (
+        estadoRobot === 'giraSensorPos' ||
+        estadoRobot === 'giraSensorNeg' ||
+        estadoRobot === 'centraSensorAntesDeGiro' ||
+        estadoRobot === 'centraSensor'
+      ) {
+        // Reiniciar a avanzando y centrar sensor
+        estadoRobot = 'avanzando';
+        sensorCurrentAngle = 0;
+        sensorTargetAngle = 0;
+        leftPower = 0;
+        rightPower = 0;
+        distanciaMedidaPos = null;
+        distanciaMedidaNeg = null;
+        tiempoGiroRestante = 0;
+      }
+      updateSliderDisplays();
+    });
+    // Ángulo sensor -: 0 a -90
+    const angNegSlider = document.getElementById('angNegSlider');
+    angNegSlider.min = -90;
+    angNegSlider.max = 0;
+    angNegSlider.step = 1;
+    angNegSlider.value = -90;
+    angNegSlider.addEventListener('input', function() {
+      anguloSensorNeg = parseInt(this.value);
+      // Si el robot está en cualquier estado de giro de sensor, forzar transición segura
+      if (
+        estadoRobot === 'giraSensorPos' ||
+        estadoRobot === 'giraSensorNeg' ||
+        estadoRobot === 'centraSensorAntesDeGiro' ||
+        estadoRobot === 'centraSensor'
+      ) {
+        // Reiniciar a avanzando y centrar sensor
+        estadoRobot = 'avanzando';
+        sensorCurrentAngle = 0;
+        sensorTargetAngle = 0;
+        leftPower = 0;
+        rightPower = 0;
+        distanciaMedidaPos = null;
+        distanciaMedidaNeg = null;
+        tiempoGiroRestante = 0;
+      }
+      updateSliderDisplays();
+    });
+    // Distancia umbral: slider 50-400 px (mm)
+    const distUmbralSlider = document.getElementById('distUmbralSlider');
+    distUmbralSlider.min = 50;
+    distUmbralSlider.max = 400;
+    distUmbralSlider.step = 1;
+    distUmbralSlider.value = 200;
+    distUmbralSlider.addEventListener('input', function() {
+      distanciaDeteccion = parseInt(this.value);
+      updateSliderDisplays();
+    });
+    // Tiempo giro robot igual
+    document.getElementById('tiempoGiroSlider').addEventListener('input', function() {
+      tiempoGiroRobot = parseInt(this.value);
+      updateSliderDisplays();
+    });
+    // Slider para tiempo de retroceso
+    const tiempoRetrocesoSlider = document.getElementById('tiempoRetrocesoSlider');
+    tiempoRetrocesoSlider.min = 0;
+    tiempoRetrocesoSlider.max = 1000;
+    tiempoRetrocesoSlider.step = 10;
+    tiempoRetrocesoSlider.value = 200;
+    tiempoRetrocesoSlider.addEventListener('input', function() {
+      tiempoRetrocesoRobot = parseInt(this.value);
+      updateSliderDisplays();
+    });
+    // Inicializar displays
+    updateSliderDisplays();
 
     // --- Robot 1 ---
     // Posición y ángulo aleatorios para robot 1
@@ -120,7 +305,6 @@
       return { x, y, angle };
     }
     const pose1 = randomRobotPose();
-    const pose2 = randomRobotPose();
 
     const leftWheel = Bodies.rectangle(
       pose1.x + wheelOffsetX,
@@ -171,79 +355,12 @@
     World.add(world, robot);
     Body.setInertia(robot, inertiaValue);
 
-    // --- Robot 2 ---
-    const leftWheel2 = Bodies.rectangle(
-      pose2.x + wheelOffsetX,
-      pose2.y + wheelOffsetY,
-      wheelWidth,
-      wheelHeight,
-      {
-        label: 'leftWheel2',
-        render: { visible: false },
-        collisionFilter: { group: -2 },
-        friction: friccionRuedas,
-        frictionStatic: friccionRuedas * 1.5,
-        frictionAir: 0.01 + friccionRuedas * 0.01,
-        mass: masaTotal * 0.125
-      }
-    );
-    const rightWheel2 = Bodies.rectangle(
-      pose2.x + wheelOffsetX,
-      pose2.y - wheelOffsetY,
-      wheelWidth,
-      wheelHeight,
-      {
-        label: 'rightWheel2',
-        render: { visible: false },
-        collisionFilter: { group: -2 },
-        friction: friccionRuedas,
-        frictionStatic: friccionRuedas * 1.5,
-        frictionAir: 0.01 + friccionRuedas * 0.01,
-        mass: masaTotal * 0.125
-      }
-    );
-    const chassis2 = Bodies.rectangle(
-      pose2.x,
-      pose2.y,
-      chassisWidth,
-      chassisHeight,
-      {
-        label: 'chassis2',
-        render: { visible: false },
-        collisionFilter: { group: -2 },
-        mass: masaTotal * 0.75
-      }
-    );
-    const robot2 = Body.create({
-      parts: [chassis2, leftWheel2, rightWheel2]
-    });
-    Body.setAngle(robot2, pose2.angle);
-    World.add(world, robot2);
-    Body.setInertia(robot2, inertiaValue);
-
     let friccionLateral = 1.2; // Coeficiente de fricción lateral (ajustable, subido para notar efecto)
 
     // --- Fricción lateral en las ruedas ---
     function aplicarFriccionLateral() {
       [leftWheel, rightWheel].forEach((wheel) => {
         const ang = robot.angle;
-        const lateralX = -Math.sin(ang);
-        const lateralY = Math.cos(ang);
-        const vx = wheel.velocity.x;
-        const vy = wheel.velocity.y;
-        const vLateral = vx * lateralX + vy * lateralY;
-        const fuerzaLateral = -vLateral * wheel.mass * friccionLateral;
-        const fuerza = {
-          x: lateralX * fuerzaLateral,
-          y: lateralY * fuerzaLateral
-        };
-        Body.applyForce(wheel, wheel.position, fuerza);
-      });
-    }
-
-    function aplicarFriccionLateral2() {
-      [leftWheel2, rightWheel2].forEach((wheel) => {
-        const ang = robot2.angle;
         const lateralX = -Math.sin(ang);
         const lateralY = Math.cos(ang);
         const vx = wheel.velocity.x;
@@ -278,25 +395,6 @@
       Body.applyForce(robot, rightPos, rightF);
     }
 
-    function applyWheelForces2(leftForce, rightForce) {
-      const cos = Math.cos(robot2.angle);
-      const sin = Math.sin(robot2.angle);
-      const leftPos = {
-        x: robot2.position.x + wheelOffsetX * cos + wheelOffsetY * sin,
-        y: robot2.position.y + wheelOffsetX * sin - wheelOffsetY * cos,
-      };
-      const rightPos = {
-        x: robot2.position.x + wheelOffsetX * cos - wheelOffsetY * sin,
-        y: robot2.position.y + wheelOffsetX * sin + wheelOffsetY * cos,
-      };
-      const fx = Math.cos(robot2.angle);
-      const fy = Math.sin(robot2.angle);
-      const leftF = { x: leftForce * fx, y: leftForce * fy };
-      const rightF = { x: rightForce * fx, y: rightForce * fy };
-      Body.applyForce(robot2, leftPos, leftF);
-      Body.applyForce(robot2, rightPos, rightF);
-    }
-
     // Renderizado personalizado
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -308,7 +406,7 @@
       ctx.fillRect(canvas.width - 3, 0, 3, canvas.height); // Right
       ctx.restore();
 
-      // --- Robot 1 ---
+      // --- Robot ---
       ctx.save();
       ctx.translate(robot.position.x, robot.position.y);
       ctx.rotate(robot.angle);
@@ -361,66 +459,517 @@
       );
       ctx.restore();
       ctx.restore();
+    }
 
-      // --- Robot 2 ---
+    // --- Obstáculos rectangulares interactivos ---
+    let obstaculos = [];
+    let obstaculoSeleccionado = null;
+    let offsetDrag = {x:0, y:0};
+    let modoControl = null; // null, 'mover', 'escalar', 'rotar'
+    let esquinaSeleccionada = null;
+    let rotando = false;
+    let anguloInicial = 0;
+    let mouseInicial = {x:0, y:0};
+    let w0 = 0, h0 = 0;
+
+    // Crear un obstáculo nuevo en el centro
+    function crearObstaculo(x, y, w = 120, h = 40, angle = 0) {
+      const body = Bodies.rectangle(x, y, w, h, {
+        isStatic: true,
+        label: 'obstaculo',
+        render: { fillStyle: '#444' }
+      });
+      Body.setAngle(body, angle);
+      World.add(world, body);
+      obstaculos.push({ body, w, h });
+    }
+
+    // Crear un obstáculo poligonal genérico
+    function crearPoligono(x, y, vertices, tipo, color) {
+      // Vértices relativos al centro
+      const body = Bodies.fromVertices(x, y, [vertices], { isStatic: true, label: 'obstaculo_' + tipo });
+      World.add(world, body);
+      obstaculos.push({ body, vertices, tipo, color });
+    }
+
+    // Dibuja los obstáculos y controles
+    function renderObstaculos() {
+      obstaculos.forEach((obs) => {
+        const { body, w, h, tipo, vertices, color } = obs;
+        ctx.save();
+        ctx.translate(body.position.x, body.position.y);
+        ctx.rotate(body.angle);
+        ctx.globalAlpha = 0.7;
+        if (tipo === 'circulo' || tipo === 'pentagono' || tipo === 'triangulo') {
+          ctx.beginPath();
+          if (vertices && vertices.length > 0) {
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            for (let i = 1; i < vertices.length; i++) {
+              ctx.lineTo(vertices[i].x, vertices[i].y);
+            }
+            ctx.closePath();
+          }
+          ctx.fillStyle = (obstaculoSeleccionado && obstaculoSeleccionado.body === body) ? '#1976d2' : (color || '#444');
+          ctx.fill();
+        } else {
+          ctx.fillStyle = (obstaculoSeleccionado && obstaculoSeleccionado.body === body) ? '#1976d2' : '#444';
+          ctx.fillRect(-w/2, -h/2, w, h);
+        }
+        // Si está seleccionado, dibujar controles
+        if (obstaculoSeleccionado && obstaculoSeleccionado.body === body) {
+          ctx.globalAlpha = 1.0;
+          if (!tipo || tipo === 'rect') {
+            // Rectángulo: esquinas para escalar
+            const corners = [
+              [-w/2, -h/2], [w/2, -h/2], [w/2, h/2], [-w/2, h/2]
+            ];
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#1976d2';
+            corners.forEach(([cx, cy], i) => {
+              ctx.beginPath();
+              ctx.arc(cx, cy, 9, 0, 2*Math.PI);
+              ctx.fill();
+              ctx.stroke();
+            });
+            // Ícono de rotación
+            const iconDist = 38;
+            const iconX = w/2 + iconDist * Math.cos(Math.PI/4);
+            const iconY = -h/2 - iconDist * Math.sin(Math.PI/4);
+            ctx.save();
+            ctx.translate(iconX, iconY);
+            ctx.beginPath();
+            ctx.arc(0, 0, 13, 0, 2*Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, Math.PI*0.2, Math.PI*1.5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(7, -2);
+            ctx.lineTo(11, -6);
+            ctx.lineTo(7, -7);
+            ctx.stroke();
+            ctx.restore();
+          } else if (tipo === 'circulo' || tipo === 'pentagono' || tipo === 'triangulo') {
+            // Polígonos/círculo: puntos de control en vértices para escalar
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#1976d2';
+            if (vertices) {
+              vertices.forEach((v, i) => {
+                ctx.beginPath();
+                ctx.arc(v.x, v.y, 9, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.stroke();
+              });
+            }
+            // Ícono de rotación (fuera del primer vértice)
+            if (vertices && vertices.length > 0) {
+              const v0 = vertices[0];
+              const iconDist = 38;
+              const ang = Math.atan2(v0.y, v0.x);
+              const iconX = v0.x + iconDist * Math.cos(ang);
+              const iconY = v0.y + iconDist * Math.sin(ang);
+              ctx.save();
+              ctx.translate(iconX, iconY);
+              ctx.beginPath();
+              ctx.arc(0, 0, 13, 0, 2*Math.PI);
+              ctx.fillStyle = '#fff';
+              ctx.fill();
+              ctx.strokeStyle = '#1976d2';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.arc(0, 0, 8, Math.PI*0.2, Math.PI*1.5);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(7, -2);
+              ctx.lineTo(11, -6);
+              ctx.lineTo(7, -7);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+        }
+        ctx.restore();
+      });
+    }
+
+    // --- Renderizar controles de rotación para el robot cuando la simulación está detenida ---
+    function renderRobotRotationControl() {
+      if (!simulacionPausada) return;
       ctx.save();
-      ctx.translate(robot2.position.x, robot2.position.y);
-      ctx.rotate(robot2.angle);
-      ctx.drawImage(
-        chassisImg,
-        -chassisWidth / 2,
-        -chassisHeight / 2,
-        chassisWidth,
-        chassisHeight
-      );
+      ctx.translate(robot.position.x, robot.position.y);
+      ctx.rotate(robot.angle);
+      // Ícono de rotación (arriba a la derecha del robot)
+      const iconDist = Math.max(chassisWidth, chassisHeight)/2 + 38;
+      const iconX = iconDist * Math.cos(Math.PI/4);
+      const iconY = -iconDist * Math.sin(Math.PI/4);
       ctx.save();
-      ctx.translate(wheelOffsetX, wheelOffsetY);
-      ctx.drawImage(
-        wheelImg,
-        -wheelWidth / 2,
-        -wheelHeight / 2,
-        wheelWidth,
-        wheelHeight
-      );
-      ctx.restore();
-      ctx.save();
-      ctx.translate(wheelOffsetX, -wheelOffsetY);
-      ctx.drawImage(
-        wheelImg,
-        -wheelWidth / 2,
-        -wheelHeight / 2,
-        wheelWidth,
-        wheelHeight
-      );
-      ctx.restore();
-      ctx.save();
-      ctx.translate(sensorOffsetX, sensorOffsetY);
-      ctx.rotate(Math.PI/2 + sensorCurrentAngle2);
-      ctx.save();
-      ctx.globalAlpha = 1.0;
-      ctx.fillStyle = 'rgba(200,200,200,0.18)'; // Gris muy claro y transparente
+      ctx.translate(iconX, iconY);
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.arc(0, 0, sensorRange, -fovRad/2 + Math.PI/2 + Math.PI, fovRad/2 + Math.PI/2 + Math.PI);
-      ctx.closePath();
+      ctx.arc(0, 0, 16, 0, 2*Math.PI);
+      ctx.fillStyle = '#fff';
       ctx.fill();
-      ctx.restore();
-      ctx.drawImage(
-        sensorImg,
-        -sensorWidth / 2,
-        -sensorHeight / 2,
-        sensorWidth,
-        sensorHeight
-      );
+      ctx.strokeStyle = '#1976d2';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, Math.PI*0.2, Math.PI*1.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(10, -2);
+      ctx.lineTo(15, -7);
+      ctx.lineTo(10, -8);
+      ctx.stroke();
       ctx.restore();
       ctx.restore();
     }
 
+    // Modifica render() para dibujar obstáculos y controles de rotación del robot
+    const renderOriginal = render;
+    render = function() {
+      renderOriginal();
+      renderObstaculos();
+      renderRobotRotationControl();
+    };
+
+    // --- Mouse events para manipulación gráfica avanzada ---
+    let poligonoEsquinaSeleccionada = null;
+    let poligonoEscalando = false;
+    let poligonoRotando = false;
+    let robotRotando = false;
+    let robotAnguloInicial = 0;
+    let robotMouseInicial = {x:0, y:0};
+    let deleteMode = false;
+    const deleteModeBtn = document.getElementById('deleteModeBtn');
+    deleteModeBtn.addEventListener('click', function() {
+      deleteMode = !deleteMode;
+      if (deleteMode) {
+        deleteModeBtn.style.background = '#d32f2f';
+        deleteModeBtn.style.color = '#fff';
+        deleteModeBtn.style.border = '2px solid #d32f2f';
+      } else {
+        deleteModeBtn.style.background = '#fff';
+        deleteModeBtn.style.color = '#d32f2f';
+        deleteModeBtn.style.border = '2px solid #d32f2f';
+      }
+    });
+    canvas.addEventListener('mousedown', function(e) {
+      const mouse = { x: e.offsetX, y: e.offsetY };
+      // --- Rotar robot si está pausado y click en icono ---
+      if (simulacionPausada) {
+        const dx = mouse.x - robot.position.x;
+        const dy = mouse.y - robot.position.y;
+        const localX = Math.cos(-robot.angle) * dx - Math.sin(-robot.angle) * dy;
+        const localY = Math.sin(-robot.angle) * dx + Math.cos(-robot.angle) * dy;
+        const iconDist = Math.max(chassisWidth, chassisHeight)/2 + 38;
+        const iconX = iconDist * Math.cos(Math.PI/4);
+        const iconY = -iconDist * Math.sin(Math.PI/4);
+        if (Math.hypot(localX - iconX, localY - iconY) < 20) {
+          robotRotando = true;
+          robotAnguloInicial = robot.angle;
+          robotMouseInicial = { x: mouse.x, y: mouse.y };
+          return;
+        }
+      }
+      // --- Modo borrar: eliminar obstáculo bajo mouse ---
+      if (deleteMode) {
+        for (let i = obstaculos.length - 1; i >= 0; i--) {
+          const obs = obstaculos[i];
+          const { body, w, h, tipo, vertices } = obs;
+          // Transform mouse to local coords
+          const dx = mouse.x - body.position.x;
+          const dy = mouse.y - body.position.y;
+          const localX = Math.cos(-body.angle) * dx - Math.sin(-body.angle) * dy;
+          const localY = Math.sin(-body.angle) * dx + Math.cos(-body.angle) * dy;
+          let dentro = false;
+          if (tipo === 'circulo' || tipo === 'pentagono' || tipo === 'triangulo') {
+            if (vertices && puntoEnPoligono({x: localX, y: localY}, vertices)) dentro = true;
+          } else {
+            if (localX > -w/2 && localX < w/2 && localY > -h/2 && localY < h/2) dentro = true;
+          }
+          if (dentro) {
+            World.remove(world, body);
+            obstaculos.splice(i, 1);
+            break;
+          }
+        }
+        return;
+      }
+      obstaculoSeleccionado = null;
+      modoControl = null;
+      esquinaSeleccionada = null;
+      poligonoEsquinaSeleccionada = null;
+      rotando = false;
+      poligonoRotando = false;
+      // Buscar obstáculo bajo mouse (de arriba hacia abajo)
+      for (let i = obstaculos.length - 1; i >= 0; i--) {
+        const obs = obstaculos[i];
+        const { body, w, h, tipo, vertices } = obs;
+        // Transform mouse to local coords
+        const dx = mouse.x - body.position.x;
+        const dy = mouse.y - body.position.y;
+        const localX = Math.cos(-body.angle) * dx - Math.sin(-body.angle) * dy;
+        const localY = Math.sin(-body.angle) * dx + Math.cos(-body.angle) * dy;
+        if (tipo === 'circulo' || tipo === 'pentagono' || tipo === 'triangulo') {
+          // Checar si está sobre algún vértice (escalar)
+          if (vertices) {
+            for (let j = 0; j < vertices.length; j++) {
+              if (Math.hypot(localX - vertices[j].x, localY - vertices[j].y) < 13) {
+                obstaculoSeleccionado = obs;
+                poligonoEsquinaSeleccionada = j;
+                poligonoEscalando = true;
+                mouseInicial = { x: mouse.x, y: mouse.y };
+                break;
+              }
+            }
+            if (obstaculoSeleccionado) break;
+            // Checar si está sobre icono de rotar
+            const v0 = vertices[0];
+            const iconDist = 38;
+            const ang = Math.atan2(v0.y, v0.x);
+            const iconX = v0.x + iconDist * Math.cos(ang);
+            const iconY = v0.y + iconDist * Math.sin(ang);
+            if (Math.hypot(localX - iconX, localY - iconY) < 15) {
+              obstaculoSeleccionado = obs;
+              poligonoRotando = true;
+              anguloInicial = body.angle;
+              mouseInicial = { x: mouse.x, y: mouse.y };
+              break;
+            }
+          }
+          // Si está dentro del polígono, mover
+          if (vertices && puntoEnPoligono({x: localX, y: localY}, vertices)) {
+            obstaculoSeleccionado = obs;
+            modoControl = 'mover';
+            offsetDrag.x = localX;
+            offsetDrag.y = localY;
+            break;
+          }
+        } else {
+          // Checar si está sobre ícono de rotación
+          const iconDist = 38;
+          const iconX = w/2 + iconDist * Math.cos(Math.PI/4);
+          const iconY = -h/2 - iconDist * Math.sin(Math.PI/4);
+          if (
+            Math.hypot(localX - iconX, localY - iconY) < 15
+          ) {
+            obstaculoSeleccionado = obs;
+            modoControl = 'rotar';
+            rotando = true;
+            anguloInicial = body.angle;
+            mouseInicial = { x: mouse.x, y: mouse.y };
+            break;
+          }
+          // Checar si está sobre alguna esquina
+          const corners = [
+            [-w/2, -h/2], [w/2, -h/2], [w/2, h/2], [-w/2, h/2]
+          ];
+          for (let j = 0; j < 4; j++) {
+            const [cx, cy] = corners[j];
+            if (Math.hypot(localX - cx, localY - cy) < 13) {
+              obstaculoSeleccionado = obs;
+              modoControl = 'escalar';
+              esquinaSeleccionada = j;
+              w0 = w;
+              h0 = h;
+              mouseInicial = { x: mouse.x, y: mouse.y };
+              break;
+            }
+          }
+          if (obstaculoSeleccionado) break;
+          // Si está dentro del rectángulo, mover
+          if (localX > -w/2 && localX < w/2 && localY > -h/2 && localY < h/2) {
+            obstaculoSeleccionado = obs;
+            modoControl = 'mover';
+            offsetDrag.x = localX;
+            offsetDrag.y = localY;
+            break;
+          }
+        }
+      }
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      // Rotar robot
+      if (robotRotando) {
+        const mouse = { x: e.offsetX, y: e.offsetY };
+        const cx = robot.position.x;
+        const cy = robot.position.y;
+        const ang0 = Math.atan2(robotMouseInicial.y - cy, robotMouseInicial.x - cx);
+        const ang1 = Math.atan2(mouse.y - cy, mouse.x - cx);
+        const delta = ang1 - ang0;
+        Body.setAngle(robot, robotAnguloInicial + delta);
+        updateWheelPositions();
+        return;
+      }
+      // Polígonos: escalar
+      if (poligonoEscalando && obstaculoSeleccionado && (obstaculoSeleccionado.tipo === 'circulo' || obstaculoSeleccionado.tipo === 'pentagono' || obstaculoSeleccionado.tipo === 'triangulo')) {
+        const mouse = { x: e.offsetX, y: e.offsetY };
+        const { body, vertices, tipo, color } = obstaculoSeleccionado;
+        // Transformar mouse a coords locales
+        const dx = mouse.x - body.position.x;
+        const dy = mouse.y - body.position.y;
+        const localX = Math.cos(-body.angle) * dx - Math.sin(-body.angle) * dy;
+        const localY = Math.sin(-body.angle) * dx + Math.cos(-body.angle) * dy;
+        // Escalar proporcionalmente desde el centro
+        const v0 = vertices[poligonoEsquinaSeleccionada];
+        const dist0 = Math.hypot(v0.x, v0.y);
+        const dist1 = Math.hypot(localX, localY);
+        const scale = dist1 / (dist0 || 1);
+        const newVerts = vertices.map(v => ({ x: v.x * scale, y: v.y * scale }));
+        World.remove(world, body);
+        const nuevo = Bodies.fromVertices(body.position.x, body.position.y, [newVerts], { isStatic: true, label: 'obstaculo_' + tipo });
+        Body.setAngle(nuevo, body.angle); // Mantener la rotación original
+        World.add(world, nuevo);
+        obstaculoSeleccionado.body = nuevo;
+        obstaculoSeleccionado.vertices = newVerts;
+        // Mantener tipo y color
+        obstaculoSeleccionado.tipo = tipo;
+        obstaculoSeleccionado.color = color;
+        return;
+      }
+      // Polígonos: rotar
+      if (poligonoRotando && obstaculoSeleccionado) {
+        const mouse = { x: e.offsetX, y: e.offsetY };
+        const { body } = obstaculoSeleccionado;
+        const cx = body.position.x;
+        const cy = body.position.y;
+        const ang0 = Math.atan2(mouseInicial.y - cy, mouseInicial.x - cx);
+        const ang1 = Math.atan2(mouse.y - cy, mouse.x - cx);
+        const delta = ang1 - ang0;
+        Body.setAngle(body, anguloInicial + delta);
+        return;
+      }
+      if (!obstaculoSeleccionado) return;
+      const mouse = { x: e.offsetX, y: e.offsetY };
+      const { body } = obstaculoSeleccionado;
+      if (modoControl === 'mover' && e.buttons) {
+        const newX = mouse.x - (Math.cos(body.angle) * offsetDrag.x - Math.sin(body.angle) * offsetDrag.y);
+        const newY = mouse.y - (Math.sin(body.angle) * offsetDrag.x + Math.cos(body.angle) * offsetDrag.y);
+        Body.setPosition(body, { x: newX, y: newY });
+      } else if (modoControl === 'escalar' && e.buttons) {
+        const { w, h } = obstaculoSeleccionado;
+        const dx = mouse.x - body.position.x;
+        const dy = mouse.y - body.position.y;
+        const localX = Math.cos(-body.angle) * dx - Math.sin(-body.angle) * dy;
+        const localY = Math.sin(-body.angle) * dx + Math.cos(-body.angle) * dy;
+        const corners = [
+          [-w0/2, -h0/2], [w0/2, -h0/2], [w0/2, h0/2], [-w0/2, h0/2]
+        ];
+        const [ox, oy] = corners[(esquinaSeleccionada + 2) % 4];
+        let newW = Math.abs(localX - ox);
+        let newH = Math.abs(localY - oy);
+        newW = Math.max(newW, 30);
+        newH = Math.max(newH, 20);
+        World.remove(world, body);
+        const nuevo = Bodies.rectangle(body.position.x, body.position.y, newW, newH, { isStatic: true, label: 'obstaculo' });
+        Body.setAngle(nuevo, body.angle);
+        World.add(world, nuevo);
+        obstaculoSeleccionado.body = nuevo;
+        obstaculoSeleccionado.w = newW;
+        obstaculoSeleccionado.h = newH;
+      } else if (modoControl === 'rotar' && e.buttons) {
+        const cx = body.position.x;
+        const cy = body.position.y;
+        const ang0 = Math.atan2(mouseInicial.y - cy, mouseInicial.x - cx);
+        const ang1 = Math.atan2(mouse.y - cy, mouse.x - cx);
+        const delta = ang1 - ang0;
+        Body.setAngle(body, anguloInicial + delta);
+      }
+    });
+    canvas.addEventListener('mouseup', function() {
+      poligonoEsquinaSeleccionada = null;
+      poligonoEscalando = false;
+      poligonoRotando = false;
+      robotRotando = false;
+      modoControl = null;
+      esquinaSeleccionada = null;
+      rotando = false;
+    });
+
+    // Crear obstáculo con tecla 'n'
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'n') {
+        crearObstaculo(canvas.width/2, canvas.height/2);
+      }
+    });
+
+    // --- Panel de formas: lógica drag & drop ---
+    const shapesPanel = document.getElementById('shapesPanel');
+    let draggingShape = null;
+    let dragOffset = {x:0, y:0};
+
+    // Iniciar drag
+    shapesPanel.querySelectorAll('.shape-icon').forEach(icon => {
+      icon.addEventListener('dragstart', e => {
+        draggingShape = icon.getAttribute('data-shape');
+        // Para que el cursor de arrastre sea visible
+        e.dataTransfer.setData('text/plain', draggingShape);
+        // Opcional: imagen custom
+      });
+      icon.addEventListener('dragend', () => {
+        draggingShape = null;
+      });
+    });
+
+    // Permitir drop en canvas
+    canvas.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+    canvas.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!draggingShape) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      switch (draggingShape) {
+        case 'rect':
+          crearObstaculo(x, y, 120, 40, 0);
+          break;
+        case 'circle': {
+          // Círculo: aproximar con polígono regular de 24 lados
+          const r = 32;
+          const n = 24;
+          const verts = [];
+          for (let i = 0; i < n; i++) {
+            const ang = (i / n) * 2 * Math.PI;
+            verts.push({ x: r * Math.cos(ang), y: r * Math.sin(ang) });
+          }
+          crearPoligono(x, y, verts, 'circulo', '#388e3c');
+          break;
+        }
+        case 'pentagon': {
+          // Pentágono regular
+          const size = 38;
+          const verts = [];
+          for (let i = 0; i < 5; i++) {
+            const ang = -Math.PI/2 + i * 2*Math.PI/5;
+            verts.push({ x: size * Math.cos(ang), y: size * Math.sin(ang) });
+          }
+          crearPoligono(x, y, verts, 'pentagono', '#fbc02d');
+          break;
+        }
+        case 'triangle': {
+          // Triángulo equilátero
+          const size = 44;
+          const verts = [
+            { x: 0, y: -size },
+            { x: -size * Math.sin(Math.PI/3), y: size/2 },
+            { x: size * Math.sin(Math.PI/3), y: size/2 }
+          ];
+          crearPoligono(x, y, verts, 'triangulo', '#d32f2f');
+          break;
+        }
+      }
+      draggingShape = null;
+    });
+
     // --- Controles de teclado para movimiento tipo tanque ---
     let leftPower = 0;
     let rightPower = 0;
-    let leftPower2 = 0;
-    let rightPower2 = 0;
 
     function fuerzaConVariacion(base) {
       const variacion = 0.55;
@@ -465,17 +1014,11 @@
       if (eventsAdded) return;
       Events.on(engine, 'beforeUpdate', function() {
         robot.angularVelocity *= angularFriction;
-        robot2.angularVelocity *= angularFriction;
         if (leftPower === 0 && rightPower === 0) {
           Body.setAngularVelocity(robot, robot.angularVelocity * frenoMotor);
           Body.setVelocity(robot, { x: robot.velocity.x * frenoMotor, y: robot.velocity.y * frenoMotor });
         }
-        if (leftPower2 === 0 && rightPower2 === 0) {
-          Body.setAngularVelocity(robot2, robot2.angularVelocity * frenoMotor);
-          Body.setVelocity(robot2, { x: robot2.velocity.x * frenoMotor, y: robot2.velocity.y * frenoMotor });
-        }
         aplicarFriccionLateral();
-        aplicarFriccionLateral2();
       });
       eventsAdded = true;
     }
@@ -491,29 +1034,17 @@
         y: robot.position.y + wheelOffsetX * Math.sin(robot.angle) + wheelOffsetY * Math.cos(robot.angle)
       });
     }
-
-    function updateWheelPositions2() {
-      Body.setPosition(leftWheel2, {
-        x: robot2.position.x + wheelOffsetX * Math.cos(robot2.angle) + wheelOffsetY * Math.sin(robot2.angle),
-        y: robot2.position.y + wheelOffsetX * Math.sin(robot2.angle) - wheelOffsetY * Math.cos(robot2.angle)
-      });
-      Body.setPosition(rightWheel2, {
-        x: robot2.position.x + wheelOffsetX * Math.cos(robot2.angle) - wheelOffsetY * Math.sin(robot2.angle),
-        y: robot2.position.y + wheelOffsetX * Math.sin(robot2.angle) + wheelOffsetY * Math.cos(robot2.angle)
-      });
-    }
     updateWheelPositions();
-    updateWheelPositions2();
 
     // --- Lógica autónoma del robot ---
     let modoAutonomo = true;
     let estadoRobot = 'avanzando';
     let sensorTargetAngle = 0;
     let sensorCurrentAngle = 0;
-    let sensorAnimSpeed = Math.PI / 60;
     let distanciaMedidaPos = null;
     let distanciaMedidaNeg = null;
     let tiempoGiroRestante = 0;
+    let tiempoRetrocesoRestante = 0;
     let giroDerecha = true;
 
     function logicaAutonoma() {
@@ -523,11 +1054,29 @@
           if (dist < distanciaDeteccion) {
             leftPower = 0;
             rightPower = 0;
-            estadoRobot = 'giraSensorPos';
-            sensorTargetAngle = anguloSensorPos * Math.PI / 180;
+            if (tiempoRetrocesoRobot > 0) {
+              estadoRobot = 'retrocediendo';
+              tiempoRetrocesoRestante = tiempoRetrocesoRobot;
+            } else {
+              estadoRobot = 'giraSensorPos';
+              sensorTargetAngle = anguloSensorPos * Math.PI / 180;
+            }
           } else {
             leftPower = fuerzaConVariacion(FORCE);
             rightPower = fuerzaConVariacion(FORCE);
+          }
+          break;
+        }
+        case 'retrocediendo': {
+          if (tiempoRetrocesoRestante > 0) {
+            leftPower = fuerzaConVariacion(-FORCE);
+            rightPower = fuerzaConVariacion(-FORCE);
+            tiempoRetrocesoRestante -= 1000/60;
+          } else {
+            leftPower = 0;
+            rightPower = 0;
+            estadoRobot = 'giraSensorPos';
+            sensorTargetAngle = anguloSensorPos * Math.PI / 180;
           }
           break;
         }
@@ -605,124 +1154,78 @@
       }
     }
 
-    // --- Lógica autónoma del robot 2 ---
-    let modoAutonomo2 = true;
-    let estadoRobot2 = 'avanzando';
-    let sensorTargetAngle2 = 0;
-    let sensorCurrentAngle2 = 0;
-    let distanciaMedidaPos2 = null;
-    let distanciaMedidaNeg2 = null;
-    let tiempoGiroRestante2 = 0;
-    let giroDerecha2 = true;
-
-    function logicaAutonoma2() {
-      switch (estadoRobot2) {
-        case 'avanzando': {
-          const dist = medirDistanciaSensor2(sensorCurrentAngle2);
-          if (dist < distanciaDeteccion) {
-            leftPower2 = 0;
-            rightPower2 = 0;
-            estadoRobot2 = 'giraSensorPos';
-            sensorTargetAngle2 = anguloSensorPos * Math.PI / 180;
-          } else {
-            leftPower2 = fuerzaConVariacion(FORCE);
-            rightPower2 = fuerzaConVariacion(FORCE);
-          }
-          break;
-        }
-        case 'giraSensorPos': {
-          if (Math.abs(sensorCurrentAngle2 - sensorTargetAngle2) > 0.01) {
-            sensorCurrentAngle2 += Math.sign(sensorTargetAngle2 - sensorCurrentAngle2) * sensorAnimSpeed;
-          } else {
-            sensorCurrentAngle2 = sensorTargetAngle2;
-            distanciaMedidaPos2 = medirDistanciaSensor2(sensorCurrentAngle2);
-            estadoRobot2 = 'giraSensorNeg';
-            sensorTargetAngle2 = anguloSensorNeg * Math.PI / 180;
-          }
-          leftPower2 = 0;
-          rightPower2 = 0;
-          break;
-        }
-        case 'giraSensorNeg': {
-          if (Math.abs(sensorCurrentAngle2 - sensorTargetAngle2) > 0.01) {
-            sensorCurrentAngle2 += Math.sign(sensorTargetAngle2 - sensorCurrentAngle2) * sensorAnimSpeed;
-          } else {
-            sensorCurrentAngle2 = sensorTargetAngle2;
-            distanciaMedidaNeg2 = medirDistanciaSensor2(sensorCurrentAngle2);
-            if (distanciaMedidaPos2 > distanciaMedidaNeg2) {
-              giroDerecha2 = true;
-            } else {
-              giroDerecha2 = false;
-            }
-            sensorTargetAngle2 = 0;
-            estadoRobot2 = 'centraSensorAntesDeGiro';
-          }
-          leftPower2 = 0;
-          rightPower2 = 0;
-          break;
-        }
-        case 'centraSensorAntesDeGiro': {
-          if (Math.abs(sensorCurrentAngle2) > 0.01) {
-            sensorCurrentAngle2 += Math.sign(0 - sensorCurrentAngle2) * sensorAnimSpeed;
-            leftPower2 = 0;
-            rightPower2 = 0;
-          } else {
-            sensorCurrentAngle2 = 0;
-            estadoRobot2 = 'giraRobot';
-            tiempoGiroRestante2 = tiempoGiroRobot;
-            if (giroDerecha2) {
-              leftPower2 = fuerzaConVariacion(FORCE);
-              rightPower2 = fuerzaConVariacion(-FORCE);
-            } else {
-              leftPower2 = fuerzaConVariacion(-FORCE);
-              rightPower2 = fuerzaConVariacion(FORCE);
-            }
-          }
-          break;
-        }
-        case 'giraRobot': {
-          if (tiempoGiroRestante2 > 0) {
-            tiempoGiroRestante2 -= 1000/60;
-          } else {
-            leftPower2 = 0;
-            rightPower2 = 0;
-            estadoRobot2 = 'centraSensor';
-          }
-          break;
-        }
-        case 'centraSensor': {
-          if (Math.abs(sensorCurrentAngle2) > 0.01) {
-            sensorCurrentAngle2 += Math.sign(0 - sensorCurrentAngle2) * sensorAnimSpeed;
-          } else {
-            sensorCurrentAngle2 = 0;
-            estadoRobot2 = 'avanzando';
-          }
-          leftPower2 = 0;
-          rightPower2 = 0;
-          break;
-        }
-      }
-    }
-
     // --- Loop de simulación y renderizado ---
-    const runner = Runner.create();
+    let simulacionPausada = true;
+    let arrastrandoRobot = false;
+    let offsetRobot = {x:0, y:0};
+
+    // Botón de pausa/reanudar
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.textContent = simulacionPausada ? 'Comenzar simulación' : 'Detener simulación';
+    pauseBtn.addEventListener('click', () => {
+      simulacionPausada = !simulacionPausada;
+      pauseBtn.textContent = simulacionPausada ? 'Comenzar simulación' : 'Detener simulación';
+      if (!simulacionPausada) {
+        // Resetear lógica de control del robot al reanudar
+        estadoRobot = 'avanzando';
+        sensorCurrentAngle = 0;
+        sensorTargetAngle = 0;
+        leftPower = 0;
+        rightPower = 0;
+        distanciaMedidaPos = null;
+        distanciaMedidaNeg = null;
+        tiempoGiroRestante = 0;
+        giroDerecha = true;
+      }
+    });
+
     function loop() {
-      if (modoAutonomo) logicaAutonoma();
-      if (modoAutonomo2) logicaAutonoma2();
-      applyWheelForces(leftPower, rightPower);
-      applyWheelForces2(leftPower2, rightPower2);
-      Engine.update(engine, 1000 / 60);
-      updateWheelPositions();
-      updateWheelPositions2();
+      if (!simulacionPausada) {
+        if (modoAutonomo) logicaAutonoma();
+        applyWheelForces(leftPower, rightPower);
+        Engine.update(engine, 1000 / 60);
+        updateWheelPositions();
+      }
       render();
       requestAnimationFrame(loop);
     }
+
+    // Permitir mover el robot arrastrando cuando la simulación está pausada
+    canvas.addEventListener('mousedown', function(e) {
+      if (!simulacionPausada) return;
+      const mouse = { x: e.offsetX, y: e.offsetY };
+      // Ver si el mouse está sobre el robot (chasis)
+      const dx = mouse.x - robot.position.x;
+      const dy = mouse.y - robot.position.y;
+      const localX = Math.cos(-robot.angle) * dx - Math.sin(-robot.angle) * dy;
+      const localY = Math.sin(-robot.angle) * dx + Math.cos(-robot.angle) * dy;
+      if (localX > -chassisWidth/2 && localX < chassisWidth/2 && localY > -chassisHeight/2 && localY < chassisHeight/2) {
+        arrastrandoRobot = true;
+        offsetRobot.x = localX;
+        offsetRobot.y = localY;
+      }
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (arrastrandoRobot) {
+        const mouse = { x: e.offsetX, y: e.offsetY };
+        const newX = mouse.x - (Math.cos(robot.angle) * offsetRobot.x - Math.sin(robot.angle) * offsetRobot.y);
+        const newY = mouse.y - (Math.sin(robot.angle) * offsetRobot.x + Math.cos(robot.angle) * offsetRobot.y);
+        Body.setPosition(robot, { x: newX, y: newY });
+        updateWheelPositions();
+      }
+    });
+    canvas.addEventListener('mouseup', function() {
+      arrastrandoRobot = false;
+    });
 
     // Esperar a que ambas imágenes estén cargadas
     let imagesLoaded = 0;
     function checkLoaded() {
       imagesLoaded++;
-      if (imagesLoaded === 3) loop();
+      if (imagesLoaded === 3) {
+        render(); // Mostrar la escena inicial aunque esté pausada
+        loop();
+      }
     }
     chassisImg.onload = checkLoaded;
     wheelImg.onload = checkLoaded;
@@ -749,51 +1252,46 @@
           hit = true;
           break;
         }
-        // Detectar robot2 (chasis2)
-        if (
-          px > chassis2.position.x - chassisWidth/2 && px < chassis2.position.x + chassisWidth/2 &&
-          py > chassis2.position.y - chassisHeight/2 && py < chassis2.position.y + chassisHeight/2
-        ) {
-          hit = true;
-          break;
+        // Detectar obstáculos
+        for (let i = 0; i < obstaculos.length; i++) {
+          const obs = obstaculos[i];
+          const { body, w, h, tipo, vertices } = obs;
+          // Transformar punto a coords locales del obstáculo
+          const ox = px - body.position.x;
+          const oy = py - body.position.y;
+          const localX = Math.cos(-body.angle) * ox - Math.sin(-body.angle) * oy;
+          const localY = Math.sin(-body.angle) * ox + Math.cos(-body.angle) * oy;
+          if (!tipo || tipo === 'rect') {
+            // Rectángulo
+            if (localX > -w/2 && localX < w/2 && localY > -h/2 && localY < h/2) {
+              hit = true;
+              break;
+            }
+          } else if (vertices && vertices.length > 0) {
+            // Polígonos y círculo (aproximado)
+            if (puntoEnPoligono({x: localX, y: localY}, vertices)) {
+              hit = true;
+              break;
+            }
+          }
         }
+        if (hit) break;
         dist += step;
       }
       return dist;
     }
 
-    // --- Raycasting para el sensor ultrasónico del robot 2 ---
-    function medirDistanciaSensor2(sensorAngleRad) {
-      const cosR = Math.cos(robot2.angle);
-      const sinR = Math.sin(robot2.angle);
-      const sensorX = robot2.position.x + sensorOffsetX * cosR + sensorOffsetY * sinR;
-      const sensorY = robot2.position.y + sensorOffsetX * sinR - sensorOffsetY * cosR;
-      const ang = robot2.angle + sensorAngleRad;
-      const dx = Math.cos(ang);
-      const dy = Math.sin(ang);
-      let dist = 0;
-      let hit = false;
-      const maxDist = sensorRange;
-      const step = 2;
-      while (dist < maxDist && !hit) {
-        const px = sensorX + dx * dist;
-        const py = sensorY + dy * dist;
-        // Detectar paredes
-        if (px < 3 || px > canvas.width - 3 || py < 3 || py > canvas.height - 3) {
-          hit = true;
-          break;
-        }
-        // Detectar robot1 (chasis)
-        if (
-          px > chassis.position.x - chassisWidth/2 && px < chassis.position.x + chassisWidth/2 &&
-          py > chassis.position.y - chassisHeight/2 && py < chassis.position.y + chassisHeight/2
-        ) {
-          hit = true;
-          break;
-        }
-        dist += step;
+    // --- Utilidad: punto en polígono ---
+    function puntoEnPoligono(p, verts) {
+      let inside = false;
+      for (let i = 0, j = verts.length - 1; i < verts.length; j = i++) {
+        const xi = verts[i].x, yi = verts[i].y;
+        const xj = verts[j].x, yj = verts[j].y;
+        const intersect = ((yi > p.y) !== (yj > p.y)) &&
+          (p.x < (xj - xi) * (p.y - yi) / (yj - yi + 1e-10) + xi);
+        if (intersect) inside = !inside;
       }
-      return dist;
+      return inside;
     }
   </script>
 </body>
