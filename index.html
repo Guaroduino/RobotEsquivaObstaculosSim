@@ -10,13 +10,13 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: #222;
+      background: #fff; /* Fondo blanco */
     }
     #sim {
       display: block;
       width: 100vw;
       height: 100vh;
-      background: #222;
+      background: #fff; /* Fondo blanco */
     }
   </style>
 </head>
@@ -110,10 +110,21 @@
     let tiempoGiroRobot = 1010;
     // --- Fin valores fijos ---
 
-    // Crear cuerpos de las ruedas
+    // --- Robot 1 ---
+    // Posición y ángulo aleatorios para robot 1
+    function randomRobotPose() {
+      const margin = 100;
+      const x = margin + Math.random() * (canvas.width - 2 * margin);
+      const y = margin + Math.random() * (canvas.height - 2 * margin);
+      const angle = Math.random() * 2 * Math.PI;
+      return { x, y, angle };
+    }
+    const pose1 = randomRobotPose();
+    const pose2 = randomRobotPose();
+
     const leftWheel = Bodies.rectangle(
-      canvas.width / 2 + wheelOffsetX,
-      canvas.height / 2 + wheelOffsetY,
+      pose1.x + wheelOffsetX,
+      pose1.y + wheelOffsetY,
       wheelWidth,
       wheelHeight,
       {
@@ -127,8 +138,8 @@
       }
     );
     const rightWheel = Bodies.rectangle(
-      canvas.width / 2 + wheelOffsetX,
-      canvas.height / 2 - wheelOffsetY,
+      pose1.x + wheelOffsetX,
+      pose1.y - wheelOffsetY,
       wheelWidth,
       wheelHeight,
       {
@@ -141,11 +152,9 @@
         mass: masaTotal * 0.125
       }
     );
-
-    // Crear cuerpo del chasis
     const chassis = Bodies.rectangle(
-      canvas.width / 2,
-      canvas.height / 2,
+      pose1.x,
+      pose1.y,
       chassisWidth,
       chassisHeight,
       {
@@ -155,126 +164,154 @@
         mass: masaTotal * 0.75
       }
     );
-
-    // Crear cuerpo compuesto del robot
     const robot = Body.create({
       parts: [chassis, leftWheel, rightWheel]
     });
+    Body.setAngle(robot, pose1.angle);
     World.add(world, robot);
-    // Aplicar inercia inicial
     Body.setInertia(robot, inertiaValue);
 
-    // Variables globales para debug de fuerzas
-    let lastLeftForce = {pos: {x:0, y:0}, force: {x:0, y:0}};
-    let lastRightForce = {pos: {x:0, y:0}, force: {x:0, y:0}};
-
-    // Variables globales para debug de fricción lateral
-    let lastLeftLateral = {pos: {x:0, y:0}, force: {x:0, y:0}};
-    let lastRightLateral = {pos: {x:0, y:0}, force: {x:0, y:0}};
+    // --- Robot 2 ---
+    const leftWheel2 = Bodies.rectangle(
+      pose2.x + wheelOffsetX,
+      pose2.y + wheelOffsetY,
+      wheelWidth,
+      wheelHeight,
+      {
+        label: 'leftWheel2',
+        render: { visible: false },
+        collisionFilter: { group: -2 },
+        friction: friccionRuedas,
+        frictionStatic: friccionRuedas * 1.5,
+        frictionAir: 0.01 + friccionRuedas * 0.01,
+        mass: masaTotal * 0.125
+      }
+    );
+    const rightWheel2 = Bodies.rectangle(
+      pose2.x + wheelOffsetX,
+      pose2.y - wheelOffsetY,
+      wheelWidth,
+      wheelHeight,
+      {
+        label: 'rightWheel2',
+        render: { visible: false },
+        collisionFilter: { group: -2 },
+        friction: friccionRuedas,
+        frictionStatic: friccionRuedas * 1.5,
+        frictionAir: 0.01 + friccionRuedas * 0.01,
+        mass: masaTotal * 0.125
+      }
+    );
+    const chassis2 = Bodies.rectangle(
+      pose2.x,
+      pose2.y,
+      chassisWidth,
+      chassisHeight,
+      {
+        label: 'chassis2',
+        render: { visible: false },
+        collisionFilter: { group: -2 },
+        mass: masaTotal * 0.75
+      }
+    );
+    const robot2 = Body.create({
+      parts: [chassis2, leftWheel2, rightWheel2]
+    });
+    Body.setAngle(robot2, pose2.angle);
+    World.add(world, robot2);
+    Body.setInertia(robot2, inertiaValue);
 
     let friccionLateral = 1.2; // Coeficiente de fricción lateral (ajustable, subido para notar efecto)
 
     // --- Fricción lateral en las ruedas ---
     function aplicarFriccionLateral() {
-      // Para cada rueda (izquierda y derecha)
-      [leftWheel, rightWheel].forEach((wheel, idx) => {
-        // Ángulo del robot
+      [leftWheel, rightWheel].forEach((wheel) => {
         const ang = robot.angle;
-        // Vector lateral local (eje Y local del robot)
         const lateralX = -Math.sin(ang);
         const lateralY = Math.cos(ang);
-        // Velocidad de la rueda
         const vx = wheel.velocity.x;
         const vy = wheel.velocity.y;
-        // Componente lateral de la velocidad
         const vLateral = vx * lateralX + vy * lateralY;
-        // Fuerza de fricción lateral (opuesta a la velocidad lateral)
         const fuerzaLateral = -vLateral * wheel.mass * friccionLateral;
-        // Aplicar fuerza en la dirección lateral
         const fuerza = {
           x: lateralX * fuerzaLateral,
           y: lateralY * fuerzaLateral
         };
         Body.applyForce(wheel, wheel.position, fuerza);
-        // Guardar para graficar
-        if (idx === 0) {
-          lastLeftLateral = {pos: {...wheel.position}, force: {...fuerza}};
-        } else {
-          lastRightLateral = {pos: {...wheel.position}, force: {...fuerza}};
-        }
+      });
+    }
+
+    function aplicarFriccionLateral2() {
+      [leftWheel2, rightWheel2].forEach((wheel) => {
+        const ang = robot2.angle;
+        const lateralX = -Math.sin(ang);
+        const lateralY = Math.cos(ang);
+        const vx = wheel.velocity.x;
+        const vy = wheel.velocity.y;
+        const vLateral = vx * lateralX + vy * lateralY;
+        const fuerzaLateral = -vLateral * wheel.mass * friccionLateral;
+        const fuerza = {
+          x: lateralX * fuerzaLateral,
+          y: lateralY * fuerzaLateral
+        };
+        Body.applyForce(wheel, wheel.position, fuerza);
       });
     }
 
     // Modifica applyWheelForces para guardar las fuerzas y posiciones
     function applyWheelForces(leftForce, rightForce) {
-      // Calcular posiciones globales de las ruedas
       const cos = Math.cos(robot.angle);
       const sin = Math.sin(robot.angle);
-      // Izquierda
       const leftPos = {
         x: robot.position.x + wheelOffsetX * cos + wheelOffsetY * sin,
         y: robot.position.y + wheelOffsetX * sin - wheelOffsetY * cos,
       };
-      // Derecha
       const rightPos = {
         x: robot.position.x + wheelOffsetX * cos - wheelOffsetY * sin,
         y: robot.position.y + wheelOffsetX * sin + wheelOffsetY * cos,
       };
-      // Aplicar fuerzas en la dirección del eje X local del robot
       const fx = Math.cos(robot.angle);
       const fy = Math.sin(robot.angle);
       const leftF = { x: leftForce * fx, y: leftForce * fy };
       const rightF = { x: rightForce * fx, y: rightForce * fy };
       Body.applyForce(robot, leftPos, leftF);
       Body.applyForce(robot, rightPos, rightF);
-      // Guardar para debug
-      lastLeftForce = {pos: {...leftPos}, force: {...leftF}};
-      lastRightForce = {pos: {...rightPos}, force: {...rightF}};
     }
 
-    // Gizmo para ejes locales
-    function drawGizmo(ctx, x, y, angle, length = 60) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      // Eje X (rojo)
-      ctx.strokeStyle = 'red';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(length, 0);
-      ctx.stroke();
-      // Eje Y (verde)
-      ctx.strokeStyle = 'lime';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -length); // Y hacia arriba
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Gizmo para ejes globales (esquina inferior izquierda)
-    function drawWorldGizmo(ctx) {
-      drawGizmo(ctx, 40, canvas.height - 40, 0, 40);
+    function applyWheelForces2(leftForce, rightForce) {
+      const cos = Math.cos(robot2.angle);
+      const sin = Math.sin(robot2.angle);
+      const leftPos = {
+        x: robot2.position.x + wheelOffsetX * cos + wheelOffsetY * sin,
+        y: robot2.position.y + wheelOffsetX * sin - wheelOffsetY * cos,
+      };
+      const rightPos = {
+        x: robot2.position.x + wheelOffsetX * cos - wheelOffsetY * sin,
+        y: robot2.position.y + wheelOffsetX * sin + wheelOffsetY * cos,
+      };
+      const fx = Math.cos(robot2.angle);
+      const fy = Math.sin(robot2.angle);
+      const leftF = { x: leftForce * fx, y: leftForce * fy };
+      const rightF = { x: rightForce * fx, y: rightForce * fy };
+      Body.applyForce(robot2, leftPos, leftF);
+      Body.applyForce(robot2, rightPos, rightF);
     }
 
     // Renderizado personalizado
     function render() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Dibujar paredes
       ctx.save();
-      ctx.fillStyle = '#888';
+      ctx.fillStyle = 'rgba(120,120,120,0.12)'; // Paredes muy transparentes
       ctx.fillRect(0, 0, canvas.width, 3); // Top
       ctx.fillRect(0, canvas.height - 3, canvas.width, 3); // Bottom
       ctx.fillRect(0, 0, 3, canvas.height); // Left
       ctx.fillRect(canvas.width - 3, 0, 3, canvas.height); // Right
       ctx.restore();
-      // Gizmo global
-      drawWorldGizmo(ctx);
-      // Renderizar robot (chasis y ruedas)
+
+      // --- Robot 1 ---
       ctx.save();
       ctx.translate(robot.position.x, robot.position.y);
       ctx.rotate(robot.angle);
-      // Chasis
       ctx.drawImage(
         chassisImg,
         -chassisWidth / 2,
@@ -282,8 +319,6 @@
         chassisWidth,
         chassisHeight
       );
-      // Ruedas
-      // Izquierda
       ctx.save();
       ctx.translate(wheelOffsetX, wheelOffsetY);
       ctx.drawImage(
@@ -293,9 +328,7 @@
         wheelWidth,
         wheelHeight
       );
-      drawGizmo(ctx, 0, 0, 0, 30);
       ctx.restore();
-      // Derecha
       ctx.save();
       ctx.translate(wheelOffsetX, -wheelOffsetY);
       ctx.drawImage(
@@ -305,23 +338,19 @@
         wheelWidth,
         wheelHeight
       );
-      drawGizmo(ctx, 0, 0, 0, 30);
       ctx.restore();
-      // Sensor ultrasónico
       ctx.save();
       ctx.translate(sensorOffsetX, sensorOffsetY);
-      ctx.rotate(Math.PI/2 + sensorCurrentAngle); // Rotar +90 grados + animación
-      // Zona de detección (FOV)
+      ctx.rotate(Math.PI/2 + sensorCurrentAngle);
       ctx.save();
-      ctx.globalAlpha = 0.18;
-      ctx.fillStyle = 'cyan';
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = 'rgba(200,200,200,0.18)'; // Gris muy claro y transparente
       ctx.beginPath();
       ctx.moveTo(0, 0);
       const fovRad = sensorFOV * Math.PI / 180;
       ctx.arc(0, 0, sensorRange, -fovRad/2 + Math.PI/2 + Math.PI, fovRad/2 + Math.PI/2 + Math.PI);
       ctx.closePath();
       ctx.fill();
-      ctx.globalAlpha = 1.0;
       ctx.restore();
       ctx.drawImage(
         sensorImg,
@@ -330,28 +359,71 @@
         sensorWidth,
         sensorHeight
       );
-      drawGizmo(ctx, 0, 0, 0, 30); // Gizmo local del sensor
       ctx.restore();
-      // Gizmo local del chasis
-      drawGizmo(ctx, 0, 0, 0, 60);
       ctx.restore();
 
-      // Dibujar fuerzas aplicadas (en coordenadas globales)
-      drawForceArrow(ctx, lastLeftForce.pos.x, lastLeftForce.pos.y, lastLeftForce.force.x, lastLeftForce.force.y, 'magenta');
-      drawForceArrow(ctx, lastRightForce.pos.x, lastRightForce.pos.y, lastRightForce.force.x, lastRightForce.force.y, 'yellow');
-
-      // Dibujar fuerzas de fricción lateral
-      drawForceArrow(ctx, lastLeftLateral.pos.x, lastLeftLateral.pos.y, lastLeftLateral.force.x, lastLeftLateral.force.y, 'blue');
-      drawForceArrow(ctx, lastRightLateral.pos.x, lastRightLateral.pos.y, lastRightLateral.force.x, lastRightLateral.force.y, 'blue');
+      // --- Robot 2 ---
+      ctx.save();
+      ctx.translate(robot2.position.x, robot2.position.y);
+      ctx.rotate(robot2.angle);
+      ctx.drawImage(
+        chassisImg,
+        -chassisWidth / 2,
+        -chassisHeight / 2,
+        chassisWidth,
+        chassisHeight
+      );
+      ctx.save();
+      ctx.translate(wheelOffsetX, wheelOffsetY);
+      ctx.drawImage(
+        wheelImg,
+        -wheelWidth / 2,
+        -wheelHeight / 2,
+        wheelWidth,
+        wheelHeight
+      );
+      ctx.restore();
+      ctx.save();
+      ctx.translate(wheelOffsetX, -wheelOffsetY);
+      ctx.drawImage(
+        wheelImg,
+        -wheelWidth / 2,
+        -wheelHeight / 2,
+        wheelWidth,
+        wheelHeight
+      );
+      ctx.restore();
+      ctx.save();
+      ctx.translate(sensorOffsetX, sensorOffsetY);
+      ctx.rotate(Math.PI/2 + sensorCurrentAngle2);
+      ctx.save();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = 'rgba(200,200,200,0.18)'; // Gris muy claro y transparente
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, sensorRange, -fovRad/2 + Math.PI/2 + Math.PI, fovRad/2 + Math.PI/2 + Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      ctx.drawImage(
+        sensorImg,
+        -sensorWidth / 2,
+        -sensorHeight / 2,
+        sensorWidth,
+        sensorHeight
+      );
+      ctx.restore();
+      ctx.restore();
     }
 
     // --- Controles de teclado para movimiento tipo tanque ---
     let leftPower = 0;
     let rightPower = 0;
+    let leftPower2 = 0;
+    let rightPower2 = 0;
 
-    // Función para aplicar variación aleatoria a la fuerza
     function fuerzaConVariacion(base) {
-      const variacion = 0.55; // 15%
+      const variacion = 0.55;
       const factor = 1 + (Math.random() * 2 - 1) * variacion;
       return base * factor;
     }
@@ -388,31 +460,28 @@
       }
     });
 
-    // Rozamiento angular para evitar patinaje excesivo
     let eventsAdded = false;
     function addFriction() {
       if (eventsAdded) return;
       Events.on(engine, 'beforeUpdate', function() {
-        // Rozamiento angular
         robot.angularVelocity *= angularFriction;
-        // Freno motor: si no hay fuerza en las ruedas, frena casi instantáneamente
+        robot2.angularVelocity *= angularFriction;
         if (leftPower === 0 && rightPower === 0) {
-          Body.setAngularVelocity(robot, robot.angularVelocity * frenoMotor); // Freno angular configurable
-          Body.setVelocity(robot, { 
-            x: robot.velocity.x * frenoMotor, 
-            y: robot.velocity.y * frenoMotor 
-          }); // Freno lineal configurable
+          Body.setAngularVelocity(robot, robot.angularVelocity * frenoMotor);
+          Body.setVelocity(robot, { x: robot.velocity.x * frenoMotor, y: robot.velocity.y * frenoMotor });
         }
-        aplicarFriccionLateral(); // Fricción lateral en cada frame
+        if (leftPower2 === 0 && rightPower2 === 0) {
+          Body.setAngularVelocity(robot2, robot2.angularVelocity * frenoMotor);
+          Body.setVelocity(robot2, { x: robot2.velocity.x * frenoMotor, y: robot2.velocity.y * frenoMotor });
+        }
+        aplicarFriccionLateral();
+        aplicarFriccionLateral2();
       });
       eventsAdded = true;
     }
     addFriction();
 
-    // Función para actualizar la posición de las ruedas en el cuerpo compuesto
     function updateWheelPositions() {
-      // Actualiza la posición relativa de las partes en el cuerpo compuesto
-      // (Matter.js no soporta mover partes, así que las movemos respecto al centro del robot)
       Body.setPosition(leftWheel, {
         x: robot.position.x + wheelOffsetX * Math.cos(robot.angle) + wheelOffsetY * Math.sin(robot.angle),
         y: robot.position.y + wheelOffsetX * Math.sin(robot.angle) - wheelOffsetY * Math.cos(robot.angle)
@@ -422,14 +491,34 @@
         y: robot.position.y + wheelOffsetX * Math.sin(robot.angle) + wheelOffsetY * Math.cos(robot.angle)
       });
     }
-    // Llamar al inicio para asegurar posiciones correctas
+
+    function updateWheelPositions2() {
+      Body.setPosition(leftWheel2, {
+        x: robot2.position.x + wheelOffsetX * Math.cos(robot2.angle) + wheelOffsetY * Math.sin(robot2.angle),
+        y: robot2.position.y + wheelOffsetX * Math.sin(robot2.angle) - wheelOffsetY * Math.cos(robot2.angle)
+      });
+      Body.setPosition(rightWheel2, {
+        x: robot2.position.x + wheelOffsetX * Math.cos(robot2.angle) - wheelOffsetY * Math.sin(robot2.angle),
+        y: robot2.position.y + wheelOffsetX * Math.sin(robot2.angle) + wheelOffsetY * Math.cos(robot2.angle)
+      });
+    }
     updateWheelPositions();
+    updateWheelPositions2();
 
     // --- Lógica autónoma del robot ---
+    let modoAutonomo = true;
+    let estadoRobot = 'avanzando';
+    let sensorTargetAngle = 0;
+    let sensorCurrentAngle = 0;
+    let sensorAnimSpeed = Math.PI / 60;
+    let distanciaMedidaPos = null;
+    let distanciaMedidaNeg = null;
+    let tiempoGiroRestante = 0;
+    let giroDerecha = true;
+
     function logicaAutonoma() {
       switch (estadoRobot) {
         case 'avanzando': {
-          // Medir distancia al frente
           const dist = medirDistanciaSensor(sensorCurrentAngle);
           if (dist < distanciaDeteccion) {
             leftPower = 0;
@@ -443,7 +532,6 @@
           break;
         }
         case 'giraSensorPos': {
-          // Animar sensor hacia el ángulo positivo
           if (Math.abs(sensorCurrentAngle - sensorTargetAngle) > 0.01) {
             sensorCurrentAngle += Math.sign(sensorTargetAngle - sensorCurrentAngle) * sensorAnimSpeed;
           } else {
@@ -457,19 +545,17 @@
           break;
         }
         case 'giraSensorNeg': {
-          // Animar sensor hacia el ángulo negativo
           if (Math.abs(sensorCurrentAngle - sensorTargetAngle) > 0.01) {
             sensorCurrentAngle += Math.sign(sensorTargetAngle - sensorCurrentAngle) * sensorAnimSpeed;
           } else {
             sensorCurrentAngle = sensorTargetAngle;
             distanciaMedidaNeg = medirDistanciaSensor(sensorCurrentAngle);
-            // Guardar decisión de giro
             if (distanciaMedidaPos > distanciaMedidaNeg) {
               giroDerecha = true;
             } else {
               giroDerecha = false;
             }
-            sensorTargetAngle = 0; // Volver a centro antes de girar
+            sensorTargetAngle = 0;
             estadoRobot = 'centraSensorAntesDeGiro';
           }
           leftPower = 0;
@@ -477,7 +563,6 @@
           break;
         }
         case 'centraSensorAntesDeGiro': {
-          // Centrar el sensor antes de girar el robot
           if (Math.abs(sensorCurrentAngle) > 0.01) {
             sensorCurrentAngle += Math.sign(0 - sensorCurrentAngle) * sensorAnimSpeed;
             leftPower = 0;
@@ -486,7 +571,6 @@
             sensorCurrentAngle = 0;
             estadoRobot = 'giraRobot';
             tiempoGiroRestante = tiempoGiroRobot;
-            // Usar la decisión guardada
             if (giroDerecha) {
               leftPower = fuerzaConVariacion(FORCE);
               rightPower = fuerzaConVariacion(-FORCE);
@@ -498,9 +582,8 @@
           break;
         }
         case 'giraRobot': {
-          // Girar el robot durante el tiempo configurado
           if (tiempoGiroRestante > 0) {
-            tiempoGiroRestante -= 1000/60; // asumiendo 60 FPS
+            tiempoGiroRestante -= 1000/60;
           } else {
             leftPower = 0;
             rightPower = 0;
@@ -509,7 +592,6 @@
           break;
         }
         case 'centraSensor': {
-          // Animar sensor de vuelta al centro
           if (Math.abs(sensorCurrentAngle) > 0.01) {
             sensorCurrentAngle += Math.sign(0 - sensorCurrentAngle) * sensorAnimSpeed;
           } else {
@@ -523,13 +605,115 @@
       }
     }
 
+    // --- Lógica autónoma del robot 2 ---
+    let modoAutonomo2 = true;
+    let estadoRobot2 = 'avanzando';
+    let sensorTargetAngle2 = 0;
+    let sensorCurrentAngle2 = 0;
+    let distanciaMedidaPos2 = null;
+    let distanciaMedidaNeg2 = null;
+    let tiempoGiroRestante2 = 0;
+    let giroDerecha2 = true;
+
+    function logicaAutonoma2() {
+      switch (estadoRobot2) {
+        case 'avanzando': {
+          const dist = medirDistanciaSensor2(sensorCurrentAngle2);
+          if (dist < distanciaDeteccion) {
+            leftPower2 = 0;
+            rightPower2 = 0;
+            estadoRobot2 = 'giraSensorPos';
+            sensorTargetAngle2 = anguloSensorPos * Math.PI / 180;
+          } else {
+            leftPower2 = fuerzaConVariacion(FORCE);
+            rightPower2 = fuerzaConVariacion(FORCE);
+          }
+          break;
+        }
+        case 'giraSensorPos': {
+          if (Math.abs(sensorCurrentAngle2 - sensorTargetAngle2) > 0.01) {
+            sensorCurrentAngle2 += Math.sign(sensorTargetAngle2 - sensorCurrentAngle2) * sensorAnimSpeed;
+          } else {
+            sensorCurrentAngle2 = sensorTargetAngle2;
+            distanciaMedidaPos2 = medirDistanciaSensor2(sensorCurrentAngle2);
+            estadoRobot2 = 'giraSensorNeg';
+            sensorTargetAngle2 = anguloSensorNeg * Math.PI / 180;
+          }
+          leftPower2 = 0;
+          rightPower2 = 0;
+          break;
+        }
+        case 'giraSensorNeg': {
+          if (Math.abs(sensorCurrentAngle2 - sensorTargetAngle2) > 0.01) {
+            sensorCurrentAngle2 += Math.sign(sensorTargetAngle2 - sensorCurrentAngle2) * sensorAnimSpeed;
+          } else {
+            sensorCurrentAngle2 = sensorTargetAngle2;
+            distanciaMedidaNeg2 = medirDistanciaSensor2(sensorCurrentAngle2);
+            if (distanciaMedidaPos2 > distanciaMedidaNeg2) {
+              giroDerecha2 = true;
+            } else {
+              giroDerecha2 = false;
+            }
+            sensorTargetAngle2 = 0;
+            estadoRobot2 = 'centraSensorAntesDeGiro';
+          }
+          leftPower2 = 0;
+          rightPower2 = 0;
+          break;
+        }
+        case 'centraSensorAntesDeGiro': {
+          if (Math.abs(sensorCurrentAngle2) > 0.01) {
+            sensorCurrentAngle2 += Math.sign(0 - sensorCurrentAngle2) * sensorAnimSpeed;
+            leftPower2 = 0;
+            rightPower2 = 0;
+          } else {
+            sensorCurrentAngle2 = 0;
+            estadoRobot2 = 'giraRobot';
+            tiempoGiroRestante2 = tiempoGiroRobot;
+            if (giroDerecha2) {
+              leftPower2 = fuerzaConVariacion(FORCE);
+              rightPower2 = fuerzaConVariacion(-FORCE);
+            } else {
+              leftPower2 = fuerzaConVariacion(-FORCE);
+              rightPower2 = fuerzaConVariacion(FORCE);
+            }
+          }
+          break;
+        }
+        case 'giraRobot': {
+          if (tiempoGiroRestante2 > 0) {
+            tiempoGiroRestante2 -= 1000/60;
+          } else {
+            leftPower2 = 0;
+            rightPower2 = 0;
+            estadoRobot2 = 'centraSensor';
+          }
+          break;
+        }
+        case 'centraSensor': {
+          if (Math.abs(sensorCurrentAngle2) > 0.01) {
+            sensorCurrentAngle2 += Math.sign(0 - sensorCurrentAngle2) * sensorAnimSpeed;
+          } else {
+            sensorCurrentAngle2 = 0;
+            estadoRobot2 = 'avanzando';
+          }
+          leftPower2 = 0;
+          rightPower2 = 0;
+          break;
+        }
+      }
+    }
+
     // --- Loop de simulación y renderizado ---
     const runner = Runner.create();
     function loop() {
       if (modoAutonomo) logicaAutonoma();
+      if (modoAutonomo2) logicaAutonoma2();
       applyWheelForces(leftPower, rightPower);
+      applyWheelForces2(leftPower2, rightPower2);
       Engine.update(engine, 1000 / 60);
       updateWheelPositions();
+      updateWheelPositions2();
       render();
       requestAnimationFrame(loop);
     }
@@ -544,60 +728,66 @@
     wheelImg.onload = checkLoaded;
     sensorImg.onload = checkLoaded;
 
-    // Dibuja una flecha desde (x,y) en la dirección de (fx,fy)
-    function drawForceArrow(ctx, x, y, fx, fy, color = 'cyan') {
-      const scale = 1e5; // Escala visual de la flecha
-      ctx.save();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + fx * scale, y + fy * scale);
-      ctx.stroke();
-      // Flecha
-      const angle = Math.atan2(fy, fx);
-      ctx.beginPath();
-      ctx.moveTo(x + fx * scale, y + fy * scale);
-      ctx.lineTo(x + fx * scale - 10 * Math.cos(angle - 0.3), y + fy * scale - 10 * Math.sin(angle - 0.3));
-      ctx.lineTo(x + fx * scale - 10 * Math.cos(angle + 0.3), y + fy * scale - 10 * Math.sin(angle + 0.3));
-      ctx.lineTo(x + fx * scale, y + fy * scale);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Variables de estado para lógica autónoma
-    let modoAutonomo = true; // true para activar lógica autónoma
-    let estadoRobot = 'avanzando'; // 'avanzando', 'detenido', 'giraSensorPos', 'giraSensorNeg', 'giraRobot', 'espera'
-    let sensorTargetAngle = 0; // ángulo objetivo del sensor (en radianes)
-    let sensorCurrentAngle = 0; // ángulo actual del sensor (en radianes)
-    let sensorAnimSpeed = Math.PI / 60; // velocidad de animación del sensor (rads/frame)
-    let distanciaMedidaPos = null;
-    let distanciaMedidaNeg = null;
-    let tiempoGiroRestante = 0;
-    let giroDerecha = true; // Variable global para decisión de giro
-
     // --- Raycasting para el sensor ultrasónico ---
     function medirDistanciaSensor(sensorAngleRad) {
-      // Posición global del sensor
       const cosR = Math.cos(robot.angle);
       const sinR = Math.sin(robot.angle);
       const sensorX = robot.position.x + sensorOffsetX * cosR + sensorOffsetY * sinR;
       const sensorY = robot.position.y + sensorOffsetX * sinR - sensorOffsetY * cosR;
-      // Ángulo global del sensor (robot.angle + sensorCurrentAngle)
-      const ang = robot.angle + sensorAngleRad; // Eje X positivo local, hacia adelante
+      const ang = robot.angle + sensorAngleRad;
       const dx = Math.cos(ang);
       const dy = Math.sin(ang);
-      // Raycast: avanzar en pasos pequeños hasta chocar con una pared
       let dist = 0;
       let hit = false;
       const maxDist = sensorRange;
-      const step = 2; // px
+      const step = 2;
       while (dist < maxDist && !hit) {
         const px = sensorX + dx * dist;
         const py = sensorY + dy * dist;
-        // Checar si está fuera del canvas (pared)
+        // Detectar paredes
         if (px < 3 || px > canvas.width - 3 || py < 3 || py > canvas.height - 3) {
+          hit = true;
+          break;
+        }
+        // Detectar robot2 (chasis2)
+        if (
+          px > chassis2.position.x - chassisWidth/2 && px < chassis2.position.x + chassisWidth/2 &&
+          py > chassis2.position.y - chassisHeight/2 && py < chassis2.position.y + chassisHeight/2
+        ) {
+          hit = true;
+          break;
+        }
+        dist += step;
+      }
+      return dist;
+    }
+
+    // --- Raycasting para el sensor ultrasónico del robot 2 ---
+    function medirDistanciaSensor2(sensorAngleRad) {
+      const cosR = Math.cos(robot2.angle);
+      const sinR = Math.sin(robot2.angle);
+      const sensorX = robot2.position.x + sensorOffsetX * cosR + sensorOffsetY * sinR;
+      const sensorY = robot2.position.y + sensorOffsetX * sinR - sensorOffsetY * cosR;
+      const ang = robot2.angle + sensorAngleRad;
+      const dx = Math.cos(ang);
+      const dy = Math.sin(ang);
+      let dist = 0;
+      let hit = false;
+      const maxDist = sensorRange;
+      const step = 2;
+      while (dist < maxDist && !hit) {
+        const px = sensorX + dx * dist;
+        const py = sensorY + dy * dist;
+        // Detectar paredes
+        if (px < 3 || px > canvas.width - 3 || py < 3 || py > canvas.height - 3) {
+          hit = true;
+          break;
+        }
+        // Detectar robot1 (chasis)
+        if (
+          px > chassis.position.x - chassisWidth/2 && px < chassis.position.x + chassisWidth/2 &&
+          py > chassis.position.y - chassisHeight/2 && py < chassis.position.y + chassisHeight/2
+        ) {
           hit = true;
           break;
         }
